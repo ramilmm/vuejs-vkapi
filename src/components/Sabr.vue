@@ -181,7 +181,7 @@ a {
   padding-left: 25px;
 }
 .panel-title {
-  padding-left: 2%;
+  padding-left: 1%;
   padding-top: 4px;
 }
 .panel-title a {
