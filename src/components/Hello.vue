@@ -111,39 +111,50 @@ export default {
                 reposts: arr[i].reposts.count,
                 likes: arr[i].likes.count,
                 link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
+                public_id: arr[i].from_id * (-1),
                 public_name: r.response.groups[0].name,
                 public_photo: r.response.groups[0].photo_200
               })
             }
           }
+          // if (myOption.owner_id == '-41032556') {
+          //   _this.sort()
+          // }
        })
     },
     scrollTop: function() {
       window.scrollTo(0,0);
     },
-    savePublic: function(e) {
-      console.log('current value: ' + e.target.value)
-      console.log('last value: ')
-    },
-    sort: function() {
-      var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-      for (var i = 0; i < this.posts.length; i++) {
-        console.log(this.posts[i])
-        if (this.posts[i].from_id == '71190418') {
-            pub_1.push(this.posts[i])
-        }else if (this.posts[i].from_id == '37466869') {
-          pub_2.push(this.posts[i])
-        }else if (this.posts[i].from_id == '52870150') {
-            pub_3.push(this.posts[i])
-        }else if (this.posts[i].from_id == '41032556') {
-          pub_4.push(this.posts[i])
-        }
-      }
-      console.log('pub1: ' + pub_1)
-      console.log('pub2: ' + pub_2)
-      console.log('pub3: ' + pub_3)
-      console.log('pub4: ' + pub_4)
-    }
+    // savePublic: function(e) {
+    //   console.log('current value: ' + e.target.value)
+    //   console.log('last value: ')
+    // },
+    // sort: function() {
+    //   var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
+    //   for (var i = 0; i < this.posts.length; i++) {
+    //     if (this.posts[i].public_id == 71190418) {
+    //         pub_1.push(this.posts[i])
+    //     }else if (this.posts[i].public_id == 37466869) {
+    //       pub_2.push(this.posts[i])
+    //     }else if (this.posts[i].public_id == 52870150) {
+    //         pub_3.push(this.posts[i])
+    //     }else if (this.posts[i].public_id == 41032556) {
+    //       pub_4.push(this.posts[i])
+    //     }
+    //   }
+    //   var pub_1_av = this.average(pub_1),
+    //       pub_2_av = this.average(pub_2),
+    //       pub_3_av = this.average(pub_3),
+    //       pub_4_av = this.average(pub_4);
+
+          
+    // },
+    // average: function(arr) {
+    //   var sum = 0;
+    //     for (var i = 0; i < arr.length; i++ ) 
+    //       sum += arr[i].likes;
+    //     return sum == 0 ? sum : sum / arr.length;
+    // }
   },
   created() {
     this.fetchPosts(1);
@@ -185,7 +196,7 @@ a {
   padding-top: 4px;
 }
 .panel-title a {
-  margin-left: 30px;
+  margin-left: 10px;
 }
 .panel-body {
   text-align: left;
