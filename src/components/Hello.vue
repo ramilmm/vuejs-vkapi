@@ -53,19 +53,22 @@ export default {
     return {
       posts: [],
       publics_id: ['71190418','37466869','52870150','41032556'],
-      perPage: 30,
+      perPage: 40,
       offset: 0,
       currentPage: 1
     }
   },
   methods: {
     fetchPosts: function(page) {
+      this.posts = []
       this.apiCall(0,page)
       this.apiCall(1,page)
       this.apiCall(2,page)
       this.apiCall(3,page)
-
-      function ArrayShuffle(a) {
+  
+      this.currentPage = page
+    },
+    mix: function(a) {
         var d,
         c,
         b = a.length;
@@ -76,9 +79,11 @@ export default {
           a[c] = d
          }
          return a;
-      }
-      ArrayShuffle(this.posts)
-      this.currentPage = page
+    },
+    checkAdvert: function(str) {
+      if (str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
+          return false;
+      }else return true;
     },
     apiCall: function(p_id,page) {
       var arr = ''
@@ -95,10 +100,9 @@ export default {
       myOption.owner_id = -_this.publics_id[p_id]
       VK.api('wall.get', myOption, function(r) {
           arr = r.response.items;
-          console.log('public: ' + myOption.owner_id)
           var __photo = '';
           for (var i = 0; i < arr.length; i++) {
-            if (arr[i].marked_as_ads == 0) {
+            if (_this.checkAdvert(arr[i].text)) {
               if(arr[i].attachments && arr[i].attachments[0].photo) {
                 __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
               }else __photo = ''
@@ -117,44 +121,54 @@ export default {
               })
             }
           }
-          // if (myOption.owner_id == '-41032556') {
-          //   _this.sort()
-          // }
+          if (myOption.owner_id == '-41032556') {
+            _this.mix(_this.posts)
+            setTimeout(function() {_this.sort()}, 400)
+          }
        })
     },
     scrollTop: function() {
       window.scrollTo(0,0);
     },
-    // savePublic: function(e) {
-    //   console.log('current value: ' + e.target.value)
-    //   console.log('last value: ')
-    // },
-    // sort: function() {
-    //   var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-    //   for (var i = 0; i < this.posts.length; i++) {
-    //     if (this.posts[i].public_id == 71190418) {
-    //         pub_1.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 37466869) {
-    //       pub_2.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 52870150) {
-    //         pub_3.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 41032556) {
-    //       pub_4.push(this.posts[i])
-    //     }
-    //   }
-    //   var pub_1_av = this.average(pub_1),
-    //       pub_2_av = this.average(pub_2),
-    //       pub_3_av = this.average(pub_3),
-    //       pub_4_av = this.average(pub_4);
+    sort: function() {
+      var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
+      for (var i = 0; i < this.posts.length; i++) {
+        if (this.posts[i].public_id == 71190418) {
+            pub_1.push(this.posts[i])
+        }else if (this.posts[i].public_id == 37466869) {
+          pub_2.push(this.posts[i])
+        }else if (this.posts[i].public_id == 52870150) {
+            pub_3.push(this.posts[i])
+        }else if (this.posts[i].public_id == 41032556) {
+          pub_4.push(this.posts[i])
+        }
+        }
+        var pub_1_av = this.average(pub_1),
+            pub_2_av = this.average(pub_2),
+            pub_3_av = this.average(pub_3),
+            pub_4_av = this.average(pub_4);
 
-          
-    // },
-    // average: function(arr) {
-    //   var sum = 0;
-    //     for (var i = 0; i < arr.length; i++ ) 
-    //       sum += arr[i].likes;
-    //     return sum == 0 ? sum : sum / arr.length;
-    // }
+        var res = []
+        for (var i = 0; i < this.posts.length; i++) {
+          let post = this.posts[i]
+          if (post.public_id == 71190418 && post.likes > pub_1_av) {
+              res.push(post)
+          }else if (post.public_id == 37466869 && post.likes > pub_2_av) {
+              res.push(post)
+          }else if (post.public_id == 52870150 && post.likes > pub_3_av) {
+              res.push(post)
+          }else if (post.public_id == 41032556 && post.likes > pub_4_av) {
+              res.push(post)
+          }
+        }
+        this.posts = res
+    },
+    average: function(arr) {
+      var sum = 0;
+        for (var i = 0; i < arr.length; i++ ) 
+          sum += arr[i].likes;
+        return sum == 0 ? sum : sum / arr.length;
+    }
   },
   created() {
     this.fetchPosts(1);

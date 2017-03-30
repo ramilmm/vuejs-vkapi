@@ -53,7 +53,7 @@ export default {
     return {
       posts: [],
       publics_id: ['42045023','49439086','26808859','40070457'],
-      perPage: 30,
+      perPage: 40,
       offset: 0,
       currentPage: 1
     }
@@ -80,6 +80,23 @@ export default {
       ArrayShuffle(this.posts)
       this.currentPage = page
     },
+    mix: function(a) {
+        var d,
+        c,
+        b = a.length;
+         while (b) {
+          c = Math.floor(Math.random() * b);
+          d = a[--b];
+          a[b] = a[c];
+          a[c] = d
+         }
+         return a;
+    },
+    checkAdvert: function(str) {
+      if (str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
+          return false;
+      }else return true;
+    },
     apiCall: function(p_id,page) {
       var arr = ''
       var _this = this
@@ -96,7 +113,8 @@ export default {
           arr = r.response.items;
           var __photo = '';
           for (var i = 0; i < arr.length; i++) {
-              if(arr[i].marked_as_ads == 0 && arr[i].attachments && arr[i].attachments[0].photo) {
+              if (_this.checkAdvert(arr[i].text)) {
+              if(arr[i].attachments && arr[i].attachments[0].photo) {
                 __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
               }else __photo = ''
               let date = new Date(arr[i].date*1000);
@@ -113,59 +131,68 @@ export default {
                 public_photo: r.response.groups[0].photo_200
               })
           }
-          // if (myOption.owner_id == '-40070457') {
-          //   _this.sort()
-          // }
+        }
+         if (myOption.owner_id == '-41032556') {
+            _this.mix(_this.posts)
+            setTimeout(function() {_this.sort()}, 400)
+          }
        })
 
     },
     scrollTop: function() {
       window.scrollTo(0,0);
+    },
+     mix: function(a) {
+        var d,
+        c,
+        b = a.length;
+         while (b) {
+          c = Math.floor(Math.random() * b);
+          d = a[--b];
+          a[b] = a[c];
+          a[c] = d
+         }
+         return a;
+    },
+    sort: function() {
+      var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
+      for (var i = 0; i < this.posts.length; i++) {
+        if (this.posts[i].public_id == 42045023) {
+            pub_1.push(this.posts[i])
+        }else if (this.posts[i].public_id == 49439086) {
+          pub_2.push(this.posts[i])
+        }else if (this.posts[i].public_id == 26808859) {
+            pub_3.push(this.posts[i])
+        }else if (this.posts[i].public_id == 40070457) {
+          pub_4.push(this.posts[i])
+        }
+      }
+      var pub_1_av = this.average(pub_1),
+          pub_2_av = this.average(pub_2),
+          pub_3_av = this.average(pub_3),
+          pub_4_av = this.average(pub_4);
+      
+      var res = []
+        for (var i = 0; i < this.posts.length; i++) {
+          let post = this.posts[i]
+          if (post.public_id == 42045023 && post.likes > pub_1_av) {
+              res.push(post)
+          }else if (post.public_id == 49439086 && post.likes > pub_2_av) {
+              res.push(post)
+          }else if (post.public_id == 26808859 && post.likes > pub_3_av) {
+              res.push(post)
+          }else if (post.public_id == 40070457 && post.likes > pub_4_av) {
+              res.push(post)
+          }
+        }
+        this.posts = res
+    },
+    average: function(arr) {
+      var sum = 0;
+        for (var i = 0; i < arr.length; i++ ) 
+          sum += arr[i].likes;
+        return sum == 0 ? sum : sum / arr.length;
     }
-    // sort: function() {
-    //   var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-    //   for (var i = 0; i < this.posts.length; i++) {
-    //     if (this.posts[i].public_id == 42045023) {
-    //         pub_1.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 49439086) {
-    //       pub_2.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 26808859) {
-    //         pub_3.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 40070457) {
-    //       pub_4.push(this.posts[i])
-    //     }
-    //   }
-    //   var pub_1_av = this.average(pub_1),
-    //       pub_2_av = this.average(pub_2),
-    //       pub_3_av = this.average(pub_3),
-    //       pub_4_av = this.average(pub_4);
-    //   this.sortingByLikes(pub_1_av,pub_2_av,pub_3_av,pub_4_av)
-    // },
-    // average: function(arr) {
-    //   var sum = 0;
-    //     for (var i = 0; i < arr.length; i++ ) 
-    //       sum += arr[i].likes;
-    //     return sum == 0 ? sum : sum / arr.length;
-    // },
-    // sortingByLikes: function(pub1,pub2,pub3,pub4){
-    //   var result_array = []
-    //   for (var i = 0; i < this.posts.length; i++) {
-    //     if (this.posts[i].public_id == 42045023 && this.posts[i].likes >= pub1 ) {
-    //         result_array.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 49439086 && this.posts[i].likes >= pub2) {
-    //       result_array.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 26808859 && this.posts[i].likes >= pub3) {
-    //         result_array.push(this.posts[i])
-    //     }else if (this.posts[i].public_id == 40070457 && this.posts[i].likes >= pub4) {
-    //       result_array.push(this.posts[i])
-    //     }
-    //   }
-    //   console.log('original: ' + this.posts)
-    //   console.log('before: ' + this.posts.length)
-    //   this.posts = result_array
-    //   console.log('after: ' + this.posts.length)
-    //   console.log('sorted: ' + this.posts)
-    // }
   },
   created() {
     this.fetchPosts(1);
