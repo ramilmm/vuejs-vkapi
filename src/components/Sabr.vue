@@ -2,10 +2,14 @@
   <div class="hello">
   <section>
     <a href="#" class="scroll-down" @click='scrollTop'></a>
+    <div class="showAll">
+      <a v-if="clicked" class="pagination__left" @click='showAll'>Показать все посты</a>
+      <a v-if="!clicked" class="pagination__left" @click='filter'>Отфильтровать</a>
+    </div>
   </section>
   <ul>
     <li v-for='public in publics_id'>
-      <input type="text" class="form-control" @keyup.enter='savePublic' data-pub='public' :value='"vk.com/public" + public'>
+      <input type="text" class="form-control" @keyup.enter='savePublic' v-model='public.id' :value='"vk.com/public" + public.id'>
     </li>
   </ul>
   <pagination 
@@ -25,10 +29,10 @@
         <span class="glyphicon glyphicon-retweet reposts"><span class="counter">{{ post.reposts }}</span></span>
       </div>
     </div>
-    <div  class="panel-body">
+    <div v-if='post' class="panel-body">
       <span class="body__text" style="white-space: pre-wrap;word-wrap: word-break">{{ post.text }}</span> <br/>
       <div class="post__photo">
-        <img v-if='post.photo' class="post__photo__item" :src='post.photo'>
+        <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
       </div>
     </div>
   </div>
@@ -52,7 +56,14 @@ export default {
   data () {
     return {
       posts: [],
-      publics_id: ['42045023','49439086','26808859','40070457'],
+      allPosts: [],
+      clicked: true,
+      publics_id: [
+        {id:'42045023'},
+        {id:'49439086'},
+        {id:'26808859'},
+        {id:'40070457'}
+        ],
       perPage: 40,
       offset: 0,
       currentPage: 1
@@ -60,6 +71,9 @@ export default {
   },
   methods: {
     fetchPosts: function(page) {
+       if (!this.clicked) {
+        this.clicked = true;
+      }
       this.apiCall(0,page)
       this.apiCall(1,page)
       this.apiCall(2,page)
@@ -108,7 +122,7 @@ export default {
           extended: 1,
           v: '5.62'
       }
-      myOption.owner_id = -_this.publics_id[p_id]
+      myOption.owner_id = -_this.publics_id[p_id].id
       VK.api('wall.get', myOption, function(r) {
           arr = r.response.items;
           var __photo = '';
@@ -133,7 +147,6 @@ export default {
           }
         }
          if (myOption.owner_id == '-41032556') {
-            _this.mix(_this.posts)
             setTimeout(function() {_this.sort()}, 400)
           }
        })
@@ -154,16 +167,41 @@ export default {
          }
          return a;
     },
+    showAll: function() {
+      this.posts = this.allPosts;
+      this.mix(this.posts);
+      this.clicked = !this.clicked;
+    },
+    filter: function() {
+      this.clicked = !this.clicked;
+      this.sort();
+    },
+    readCookie: function() {
+     var result = document.cookie.match(new RegExp('pubs_sabr=([^;]+)'));
+     result = decodeURIComponent(result[1]);
+     result = result.split(':');
+     for (var i = 0; i < result.length; i++) {
+        this.publics_id[i].id = result[i];
+     }
+    },
+    setCookie: function() {
+      var value = this.publics_id[0].id + ":" + this.publics_id[1].id + ":" + this.publics_id[2].id + ":" + this.publics_id[3].id;
+      var expires = "";
+      var date = new Date();
+      date.setTime(date.getTime() + (1000*24*60*60*1000));
+      expires = "; expires=" + date.toUTCString();
+      document.cookie = "pubs_sabr=" + value + expires + "; path=/";
+    },
     sort: function() {
       var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
       for (var i = 0; i < this.posts.length; i++) {
-        if (this.posts[i].public_id == 42045023) {
+        if (this.posts[i].public_id == this.publics_id[0].id) {
             pub_1.push(this.posts[i])
-        }else if (this.posts[i].public_id == 49439086) {
+        }else if (this.posts[i].public_id == this.publics_id[1].id) {
           pub_2.push(this.posts[i])
-        }else if (this.posts[i].public_id == 26808859) {
+        }else if (this.posts[i].public_id == this.publics_id[2].id) {
             pub_3.push(this.posts[i])
-        }else if (this.posts[i].public_id == 40070457) {
+        }else if (this.posts[i].public_id == this.publics_id[3].id) {
           pub_4.push(this.posts[i])
         }
       }
@@ -175,26 +213,54 @@ export default {
       var res = []
         for (var i = 0; i < this.posts.length; i++) {
           let post = this.posts[i]
-          if (post.public_id == 42045023 && post.likes > pub_1_av) {
+          if (post.public_id == this.publics_id[0].id && post.likes > pub_1_av) {
               res.push(post)
-          }else if (post.public_id == 49439086 && post.likes > pub_2_av) {
+          }else if (post.public_id == this.publics_id[1].id && post.likes > pub_2_av) {
               res.push(post)
-          }else if (post.public_id == 26808859 && post.likes > pub_3_av) {
+          }else if (post.public_id == this.publics_id[2].id && post.likes > pub_3_av) {
               res.push(post)
-          }else if (post.public_id == 40070457 && post.likes > pub_4_av) {
+          }else if (post.public_id == this.publics_id[3].id && post.likes > pub_4_av) {
               res.push(post)
           }
         }
         this.posts = res
+        this.mix(this.posts)
     },
     average: function(arr) {
       var sum = 0;
         for (var i = 0; i < arr.length; i++ ) 
           sum += arr[i].likes;
         return sum == 0 ? sum : sum / arr.length;
+    },
+    copy: function(url) {
+      if (window.clipboardData && window.clipboardData.setData) {
+          // IE specific code path to prevent textarea being shown while dialog is visible.
+          return clipboardData.setData("Text", url); 
+
+      } else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+          var textarea = document.createElement("textarea");
+          textarea.textContent = url;
+          textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in MS Edge.
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+              return document.execCommand("copy");  // Security exception may be thrown by some browsers.
+          } catch (ex) {
+              console.warn("Copy to clipboard failed.", ex);
+              return false;
+          } finally {
+              document.body.removeChild(textarea);
+          }
+      }
+    },
+    savePublic: function() {
+      this.setCookie();
+      this.fetchPosts(1);
     }
   },
   created() {
+    this.setCookie();
+    this.readCookie();
     this.fetchPosts(1);
   },
   components: {Pagination}
@@ -316,5 +382,61 @@ a.scroll-down {
     -ms-transform: translateY(-5px);
     transform: translateY(-5px);
   }
+}
+.showAll {
+  position: fixed;
+  width: 100%;
+  height: 44px;
+  display: flex;
+  justify-content: space-between;
+  margin: 30px auto 30px;
+  padding: 0 15px;
+  max-width: 1280px;
+}
+
+.pagination__left, .pagination__right {
+  width: 20%;
+}
+
+.pagination__left {
+  float: left;
+  cursor: pointer;
+}
+
+.showAll a, .showAll span {
+  display: block;
+  text-align: center;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  line-height: 42px;
+  height: 44px;
+  color: #999;
+  font-size: 15px;
+}
+
+.showAll a {
+  padding: 0 10px;
+  max-width: 160px;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  text-decoration: none;
+  margin: 0 41px;
+  transition: all .2s ease-in-out;
+}
+
+.showAll a:hover, .showAll a.current {
+  border-color: #ea4c89;
+  color: #ea4c89;
+}
+a.show-all {
+  position: fixed;
+  color: black;
+}
+.show-all {
+  position: absolute;
+    bottom: 10%;
+    left: 5%;
+    display: block;
 }
 </style>
