@@ -146,7 +146,8 @@ export default {
               })
           }
         }
-         if (myOption.owner_id == '-41032556') {
+         if (myOption.owner_id == -_this.publics_id[3].id) {
+            _this.allPosts = _this.posts;
             setTimeout(function() {_this.sort()}, 400)
           }
        })
@@ -259,9 +260,9 @@ export default {
     }
   },
   created() {
-    this.setCookie();
     this.readCookie();
     this.fetchPosts(1);
+    this.mix(this.posts);
   },
   components: {Pagination}
 }
@@ -385,7 +386,6 @@ a.scroll-down {
 }
 .showAll {
   position: fixed;
-  width: 100%;
   height: 44px;
   display: flex;
   justify-content: space-between;
@@ -416,7 +416,7 @@ a.scroll-down {
 
 .showAll a {
   padding: 0 10px;
-  max-width: 160px;
+  width: 160px;
   background-color: #fff;
   border-radius: 4px;
   border: 1px solid #ccc;
