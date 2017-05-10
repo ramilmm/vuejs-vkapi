@@ -29,8 +29,11 @@
         <span class="glyphicon glyphicon-retweet reposts"><span class="counter">{{ post.reposts }}</span></span>
       </div>
     </div>
-    <div v-if='post' class="panel-body">
-      <span class="body__text" style="white-space: pre-wrap;word-wrap: word-break">{{ post.text }}</span> <br/>
+    <div v-if='post' class="panel-body" :style="{ minHeight: post.photo_size + 'px'}">
+      <span class="body__text">{{ post.text }}</span> <br/>
+      <!-- div class="post__photo">
+        <img @click='copy(p)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p'>
+      </div> -->
       <div class="post__photo">
         <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
       </div>
@@ -92,8 +95,8 @@ export default {
          }
          return a;
     },
-    checkAdvert: function(str) {
-      if (str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
+    checkAdvert: function(str,post) {
+      if (post.is_pinned == 1 || str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
           return false;
       }else return true;
     },
@@ -114,10 +117,21 @@ export default {
           arr = r.response.items;
           var __photo = '';
           for (var i = 0; i < arr.length; i++) {
-            if (_this.checkAdvert(arr[i].text)) {
+             if (_this.checkAdvert(arr[i].text,arr[i])) {
               if(arr[i].attachments && arr[i].attachments[0].photo) {
                 __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
               }else __photo = ''
+             // let size = ''
+             //  if (_this.checkAdvert(arr[i].text,arr[i]) && arr[i].attachments) {
+             //    for (var j = 0; j < arr[i].attachments.length; j++) {
+             //      if (arr[i].attachments[j].type == 'photo') {
+             //        __photo.push(
+             //            arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
+             //          )
+             //        size = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)*0,75
+             //        console.log(size)
+             //      }
+             //    }
               let date = new Date(arr[i].date*1000);
               let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
               _this.posts.push({
@@ -130,7 +144,10 @@ export default {
                 public_id: arr[i].from_id * (-1),
                 public_name: r.response.groups[0].name,
                 public_photo: r.response.groups[0].photo_200
+                // photo_size: size
               })
+              __photo = [];
+              // size = '';
             }
           }
           if (myOption.owner_id == -_this.publics_id[3].id) {
@@ -153,11 +170,19 @@ export default {
     },
     readCookie: function() {
      var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
-     result = decodeURIComponent(result[1]);
-     result = result.split(':');
-     for (var i = 0; i < result.length; i++) {
-        this.publics_id[i].id = result[i];
-     }
+     if (result == undefined || result == '') {
+        console.log('set up cookie')
+        this.setCookie();
+        this.readCookie();
+     }else {
+        console.log('reading cookies')
+        result = decodeURIComponent(result[1]);
+        result = result.split(':');
+        for (var i = 0; i < result.length; i++) {
+          this.publics_id[i].id = result[i];
+        }
+        this.fetchPosts(1);
+    }
     },
     setCookie: function() {
       var value = this.publics_id[0].id + ":" + this.publics_id[1].id + ":" + this.publics_id[2].id + ":" + this.publics_id[3].id;
@@ -166,6 +191,7 @@ export default {
       date.setTime(date.getTime() + (1000*24*60*60*1000));
       expires = "; expires=" + date.toUTCString();
       document.cookie = "pubs=" + value + expires + "; path=/";
+      console.log('set up cookie')
     },
     sort: function() {
       var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
@@ -230,12 +256,11 @@ export default {
     },
     savePublic: function() {
       this.setCookie();
-      this.fetchPosts(1);
+      this.fetchPosts(this.currentPage);
     }
   },
   created() {
     this.readCookie();
-    this.fetchPosts(1);
     this.mix(this.posts);
   },
   components: {Pagination}
@@ -278,6 +303,7 @@ a {
   margin-left: 10px;
 }
 .panel-body {
+  position: relative;
   text-align: left;
 }
 .counters {
@@ -291,10 +317,16 @@ a {
   padding-left: 10px;
   font-size: 20px
 }
+.body__text {
+  white-space: pre-wrap;
+  word-wrap: word-break;
+}
 .post__photo {
+  position: relative;
   padding-top: 20px;
 }
 .post__photo__item {
+  /* position: absolute; */
   width: 75%
 }
 .scroll-down {

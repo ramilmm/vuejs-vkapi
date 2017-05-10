@@ -106,8 +106,8 @@ export default {
          }
          return a;
     },
-    checkAdvert: function(str) {
-      if (str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
+    checkAdvert: function(str,post) {
+      if (post.is_pinned == 1 || str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
           return false;
       }else return true;
     },
@@ -127,7 +127,7 @@ export default {
           arr = r.response.items;
           var __photo = '';
           for (var i = 0; i < arr.length; i++) {
-              if (_this.checkAdvert(arr[i].text)) {
+              if (_this.checkAdvert(arr[i].text,arr[i])) {
               if(arr[i].attachments && arr[i].attachments[0].photo) {
                 __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
               }else __photo = ''
@@ -179,11 +179,19 @@ export default {
     },
     readCookie: function() {
      var result = document.cookie.match(new RegExp('pubs_sabr=([^;]+)'));
-     result = decodeURIComponent(result[1]);
-     result = result.split(':');
-     for (var i = 0; i < result.length; i++) {
-        this.publics_id[i].id = result[i];
-     }
+     if (result == undefined || result == '') {
+        console.log('set up cookie')
+        this.setCookie();
+        this.readCookie();
+     }else {
+        console.log('reading cookies')
+        result = decodeURIComponent(result[1]);
+        result = result.split(':');
+        for (var i = 0; i < result.length; i++) {
+          this.publics_id[i].id = result[i];
+        }
+        this.fetchPosts(1);
+    }
     },
     setCookie: function() {
       var value = this.publics_id[0].id + ":" + this.publics_id[1].id + ":" + this.publics_id[2].id + ":" + this.publics_id[3].id;
@@ -192,6 +200,7 @@ export default {
       date.setTime(date.getTime() + (1000*24*60*60*1000));
       expires = "; expires=" + date.toUTCString();
       document.cookie = "pubs_sabr=" + value + expires + "; path=/";
+      console.log('set up cookie')
     },
     sort: function() {
       var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
@@ -256,12 +265,11 @@ export default {
     },
     savePublic: function() {
       this.setCookie();
-      this.fetchPosts(1);
+      this.fetchPosts(this.currentPage);
     }
   },
   created() {
     this.readCookie();
-    this.fetchPosts(1);
     this.mix(this.posts);
   },
   components: {Pagination}
