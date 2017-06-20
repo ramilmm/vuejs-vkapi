@@ -17,6 +17,14 @@
       :perPage="perPage" 
       :current="currentPage"
       @page-changed="fetchPosts"></pagination>
+      <div class="top_menu_filter">
+        <ul class="filter_list">
+          <li><span>Сортировать по</span></li>
+          <li class="filter_item" @click='sortBy("like")'>Лайкам</li>
+          <li class="filter_item" @click='sortBy("repost")'>Репостам</li>
+          <li class="filter_item" @click='sortBy("date")'>Дате</li>
+        </ul>
+    </div>
     <div v-if='post.text || post.photo' class="panel panel-default" v-for='post in posts'>
     <div class="panel-heading">
       <img :src='post.public_photo' width="25px" height="25px">
@@ -29,14 +37,29 @@
         <span class="glyphicon glyphicon-retweet reposts"><span class="counter">{{ post.reposts }}</span></span>
       </div>
     </div>
-    <div v-if='post' class="panel-body" :style="{ minHeight: post.photo_size + 'px'}">
+    <div v-if='post' class="panel-body">
       <span class="body__text">{{ post.text }}</span> <br/>
-      <!-- div class="post__photo">
+      <div class="post__photo" v-if='post.photo.length == 1'>
         <img @click='copy(p)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p'>
-      </div> -->
-      <div class="post__photo">
-        <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
       </div>
+      <div class="post__photo multiple" 
+           v-if='post.photo.length != 1'
+           :style="{ minHeight: post.photo_size + 'px'}">
+        <img @click='copy(p)'
+          v-for='(p,index) in post.photo'
+          v-if='p' 
+          v-bind:class="[index == 0 ? 'first' : '', 'post__photo__item','multiple_photo']"
+          :src='p'
+          :style='{
+            left: index*1 + "%",
+            top: index*1 + "%",
+            zIndex: 20 - index
+            }'
+        />
+      </div>
+      <!-- <div class="post__photo">
+        <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
+      </div> -->
     </div>
   </div>
   <pagination 
@@ -69,11 +92,12 @@ export default {
       ],
       perPage: 40,
       offset: 0,
-      currentPage: 1
+      currentPage: 1,
+      last_active: ''
     }
   },
   methods: {
-    fetchPosts: function(page) {
+    fetchPosts(page) {
       if (!this.clicked) {
         this.clicked = true;
       }
@@ -85,7 +109,7 @@ export default {
   
       this.currentPage = page
     },
-    mix: function(a) {
+    mix(a) {
         var d,c,b = a.length;
          while (b) {
           c = Math.floor(Math.random() * b);
@@ -95,12 +119,12 @@ export default {
          }
          return a;
     },
-    checkAdvert: function(str,post) {
+    checkAdvert(str,post) {
       if (post.is_pinned == 1 || str.indexOf('club') != -1 || str.indexOf('vk.com') != -1  || str.indexOf('public') != -1  || str.indexOf('инстаграм') != -1 || str.indexOf('Инстаграм') != -1  || str.indexOf('подписывайся') != -1  || str.indexOf('подпишись') != -1  || str.indexOf('vk.cc') != -1 ) {
           return false;
       }else return true;
     },
-    apiCall: function(p_id,page) {
+    apiCall(p_id,page) {
       var arr = ''
       var buf = []
       var _this = this
@@ -115,60 +139,61 @@ export default {
       myOption.owner_id = -_this.publics_id[p_id].id
       VK.api('wall.get', myOption, function(r) {
           arr = r.response.items;
-          var __photo = '';
+          console.log(arr)
+          var __photo = [];
           for (var i = 0; i < arr.length; i++) {
-             if (_this.checkAdvert(arr[i].text,arr[i])) {
-              if(arr[i].attachments && arr[i].attachments[0].photo) {
-                __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
-              }else __photo = ''
-             // let size = ''
-             //  if (_this.checkAdvert(arr[i].text,arr[i]) && arr[i].attachments) {
-             //    for (var j = 0; j < arr[i].attachments.length; j++) {
-             //      if (arr[i].attachments[j].type == 'photo') {
-             //        __photo.push(
-             //            arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
-             //          )
-             //        size = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)*0,75
-             //        console.log(size)
-             //      }
-             //    }
+             let size = ''
+              if (_this.checkAdvert(arr[i].text,arr[i]) && arr[i].attachments) {
+                for (var j = 0; j < arr[i].attachments.length; j++) {
+                  if (arr[i].attachments[j].type == 'photo') {
+                    __photo.push(
+                        arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
+                      )
+                    let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)
+                    let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width)
+                    size = Math.round(height/(width/553));
+                    size = Math.round(size + (size/100)*10);
+                  }
+                }
+                //TODO: find the biggest size by cycle and put it into size
               let date = new Date(arr[i].date*1000);
               let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
               _this.posts.push({
                 text: arr[i].text.replace(/\r?\n/g, '\n'),
                 photo: __photo,
+                date_to_sort: date,
                 date: post_date,
                 reposts: arr[i].reposts.count,
                 likes: arr[i].likes.count,
                 link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
                 public_id: arr[i].from_id * (-1),
                 public_name: r.response.groups[0].name,
-                public_photo: r.response.groups[0].photo_200
-                // photo_size: size
+                public_photo: r.response.groups[0].photo_200,
+                photo_size: size
               })
               __photo = [];
-              // size = '';
+              size = '';
             }
           }
           if (myOption.owner_id == -_this.publics_id[3].id) {
             _this.allPosts = _this.posts;
-            setTimeout(function() {_this.sort()}, 400)
+            setTimeout(() => {_this.sort()}, 400)
           }
        })
     },
-    scrollTop: function() {
+    scrollTop() {
       window.scrollTo(0,0);
     },
-    showAll: function() {
+    showAll() {
       this.posts = this.allPosts;
       this.mix(this.posts);
       this.clicked = !this.clicked;
     },
-    filter: function() {
+    filter() {
       this.clicked = !this.clicked;
       this.sort();
     },
-    readCookie: function() {
+    readCookie() {
      var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
      if (result == undefined || result == '') {
         console.log('set up cookie')
@@ -184,7 +209,7 @@ export default {
         this.fetchPosts(1);
     }
     },
-    setCookie: function() {
+    setCookie() {
       var value = this.publics_id[0].id + ":" + this.publics_id[1].id + ":" + this.publics_id[2].id + ":" + this.publics_id[3].id;
       var expires = "";
       var date = new Date();
@@ -193,7 +218,7 @@ export default {
       document.cookie = "pubs=" + value + expires + "; path=/";
       console.log('set up cookie')
     },
-    sort: function() {
+    sort() {
       var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
       for (var i = 0; i < this.posts.length; i++) {
         if (this.posts[i].public_id == this.publics_id[0].id) {
@@ -227,13 +252,23 @@ export default {
         this.posts = res
         this.mix(this.posts)
     },
-    average: function(arr) {
+    average(arr) {
       var sum = 0;
         for (var i = 0; i < arr.length; i++ ) 
           sum += arr[i].likes;
         return sum == 0 ? sum : sum / arr.length;
     },
-    copy: function(url) {
+    copy(url) {
+      if (event.target.className.indexOf('multiple_photo') != -1 && event.target.className.indexOf('first') != -1) {
+          event.target.style.left = '-1000px';
+          event.target.style.transition = 'all .7s ease-in-out';
+          // event.target.classList.remove('first');
+          // event.target.style.zIndex = '0';
+          let next_element = event.target.nextSibling;
+          if (next_element != null) {
+            next_element.classList.add('first');
+          }
+      }
       if (window.clipboardData && window.clipboardData.setData) {
           // IE specific code path to prevent textarea being shown while dialog is visible.
           return clipboardData.setData("Text", url); 
@@ -254,9 +289,33 @@ export default {
           }
       }
     },
-    savePublic: function() {
+    savePublic() {
       this.setCookie();
       this.fetchPosts(this.currentPage);
+    },
+    sortBy(by_this) {
+      if (this.last_active && this.last_active.classList.value.indexOf('active_item') !== -1 ) {
+        this.last_active.classList.remove('active_item');
+      }
+      event.target.classList.add('active_item');
+      this.last_active = event.target;
+      console.log(this.last_active.classList);
+      switch(by_this){
+        case 'like': 
+          this.posts.sort((a,b) => (parseInt(b.likes) - parseInt(a.likes)));
+          this.allPosts.sort((a,b) => (parseInt(b.likes) - parseInt(a.likes)));
+          break;
+        case 'repost':
+          this.posts.sort((a,b) => (parseInt(b.reposts) - parseInt(a.reposts)));
+          this.allPosts.sort((a,b) => (parseInt(b.reposts) - parseInt(a.reposts)));
+          break;
+        case 'date':
+          this.posts.sort((a,b) => (parseInt(b.date_to_sort) - parseInt(a.date_to_sort)));
+          this.allPosts.sort((a,b) => (parseInt(b.date_to_sort) - parseInt(a.date_to_sort)));
+          break;
+        default:
+          break;
+      }
     }
   },
   created() {
@@ -284,6 +343,29 @@ li {
 
 a {
   color: #42b983;
+}
+.top_menu_filter {
+  width: 57%; 
+  margin-left: 22%;
+}
+.filter_list {
+  margin-left: -40%;
+  margin-top: 1%;
+}
+.filter_item {
+  border: 1px solid #CCCCCC;
+  border-radius: 8%;
+  padding: 10px;
+  font-size: 16px; 
+  cursor:  pointer;
+}
+.filter_item:hover {
+  border: 1px solid #EA4C89;
+  color: #EA4C89;
+}
+.active_item {
+  border-color: #EA4C89;
+  color: #EA4C89;
 }
 .panel {
     width: 57%;
@@ -323,11 +405,15 @@ a {
 }
 .post__photo {
   position: relative;
-  padding-top: 20px;
+  padding-top: 2%;
 }
 .post__photo__item {
-  /* position: absolute; */
   width: 75%
+}
+.multiple_photo {
+  margin-top: 1.5em;
+  position: absolute;
+  box-shadow: 3px 0 3px -2px #6f6868;
 }
 .scroll-down {
   opacity: 1;

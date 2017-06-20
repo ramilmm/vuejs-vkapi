@@ -30,10 +30,28 @@
       </div>
     </div>
     <div v-if='post' class="panel-body">
-      <span class="body__text" style="white-space: pre-wrap;word-wrap: word-break">{{ post.text }}</span> <br/>
-      <div class="post__photo">
-        <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
+      <span class="body__text">{{ post.text }}</span> <br/>
+      <div class="post__photo" v-if='post.photo.length == 1'>
+        <img @click='copy(p)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p'>
       </div>
+      <div class="post__photo multiple" 
+           v-if='post.photo.length != 1'
+           :style="{ minHeight: post.photo_size + 'px'}">
+        <img @click='copy(p)'
+          v-for='(p,index) in post.photo'
+          v-if='p' 
+          v-bind:class="[index == 0 ? 'first' : '', 'post__photo__item','multiple_photo']"
+          :src='p'
+          :style='{
+            left: index*3 + "%",
+            top: index*2 + "%",
+            zIndex: 20 - index
+            }'
+        />
+      </div>
+      <!-- <div class="post__photo">
+        <img @click='copy(post.photo)' v-if='post.photo' class="post__photo__item" :src='post.photo'>
+      </div> -->
     </div>
   </div>
   <pagination 
@@ -52,7 +70,7 @@ VK.init({
 });
 
 export default {
-  name: 'hello',
+  name: 'Sabr',
   data () {
     return {
       posts: [],
@@ -63,7 +81,7 @@ export default {
         {id:'49439086'},
         {id:'26808859'},
         {id:'40070457'}
-        ],
+      ],
       perPage: 40,
       offset: 0,
       currentPage: 1
@@ -71,33 +89,19 @@ export default {
   },
   methods: {
     fetchPosts: function(page) {
-       if (!this.clicked) {
+      if (!this.clicked) {
         this.clicked = true;
       }
+      this.posts = []
       this.apiCall(0,page)
       this.apiCall(1,page)
       this.apiCall(2,page)
       this.apiCall(3,page)
-
-      function ArrayShuffle(a) {
-        var d,
-        c,
-        b = a.length;
-         while (b) {
-          c = Math.floor(Math.random() * b);
-          d = a[--b];
-          a[b] = a[c];
-          a[c] = d
-         }
-         return a;
-      }
-      ArrayShuffle(this.posts)
+  
       this.currentPage = page
     },
     mix: function(a) {
-        var d,
-        c,
-        b = a.length;
+        var d,c,b = a.length;
          while (b) {
           c = Math.floor(Math.random() * b);
           d = a[--b];
@@ -113,6 +117,7 @@ export default {
     },
     apiCall: function(p_id,page) {
       var arr = ''
+      var buf = []
       var _this = this
       var myOption = {
           owner_id: '',
@@ -125,12 +130,25 @@ export default {
       myOption.owner_id = -_this.publics_id[p_id].id
       VK.api('wall.get', myOption, function(r) {
           arr = r.response.items;
-          var __photo = '';
+          var __photo = [];
           for (var i = 0; i < arr.length; i++) {
-              if (_this.checkAdvert(arr[i].text,arr[i])) {
-              if(arr[i].attachments && arr[i].attachments[0].photo) {
-                __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
-              }else __photo = ''
+             // if (_this.checkAdvert(arr[i].text,arr[i])) {
+             //  if(arr[i].attachments && arr[i].attachments[0].photo) {
+             //    __photo = arr[i].attachments[0].photo.sizes[arr[i].attachments[0].photo.sizes.length - 1].src
+             //  }else __photo = ''
+             let size = ''
+              if (_this.checkAdvert(arr[i].text,arr[i]) && arr[i].attachments) {
+                for (var j = 0; j < arr[i].attachments.length; j++) {
+                  if (arr[i].attachments[j].type == 'photo') {
+                    __photo.push(
+                        arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
+                      )
+                    let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)
+                    let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width)
+                    size = Math.round(height/(width/553));
+                    size = Math.round(size + (size/100)*10);
+                  }
+                }
               let date = new Date(arr[i].date*1000);
               let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
               _this.posts.push({
@@ -140,33 +158,23 @@ export default {
                 reposts: arr[i].reposts.count,
                 likes: arr[i].likes.count,
                 link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
-                public_id: arr[i].from_id*(-1),
+                public_id: arr[i].from_id * (-1),
                 public_name: r.response.groups[0].name,
-                public_photo: r.response.groups[0].photo_200
+                public_photo: r.response.groups[0].photo_200,
+                photo_size: size
               })
+              __photo = [];
+              size = '';
+            }
           }
-        }
-         if (myOption.owner_id == -_this.publics_id[3].id) {
+          if (myOption.owner_id == -_this.publics_id[3].id) {
             _this.allPosts = _this.posts;
             setTimeout(function() {_this.sort()}, 400)
           }
        })
-
     },
     scrollTop: function() {
       window.scrollTo(0,0);
-    },
-     mix: function(a) {
-        var d,
-        c,
-        b = a.length;
-         while (b) {
-          c = Math.floor(Math.random() * b);
-          d = a[--b];
-          a[b] = a[c];
-          a[c] = d
-         }
-         return a;
     },
     showAll: function() {
       this.posts = this.allPosts;
@@ -178,7 +186,7 @@ export default {
       this.sort();
     },
     readCookie: function() {
-     var result = document.cookie.match(new RegExp('pubs_sabr=([^;]+)'));
+     var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
      if (result == undefined || result == '') {
         console.log('set up cookie')
         this.setCookie();
@@ -199,7 +207,7 @@ export default {
       var date = new Date();
       date.setTime(date.getTime() + (1000*24*60*60*1000));
       expires = "; expires=" + date.toUTCString();
-      document.cookie = "pubs_sabr=" + value + expires + "; path=/";
+      document.cookie = "pubs=" + value + expires + "; path=/";
       console.log('set up cookie')
     },
     sort: function() {
@@ -214,13 +222,13 @@ export default {
         }else if (this.posts[i].public_id == this.publics_id[3].id) {
           pub_4.push(this.posts[i])
         }
-      }
-      var pub_1_av = this.average(pub_1),
-          pub_2_av = this.average(pub_2),
-          pub_3_av = this.average(pub_3),
-          pub_4_av = this.average(pub_4);
-      
-      var res = []
+        }
+        var pub_1_av = this.average(pub_1),
+            pub_2_av = this.average(pub_2),
+            pub_3_av = this.average(pub_3),
+            pub_4_av = this.average(pub_4);
+
+        var res = []
         for (var i = 0; i < this.posts.length; i++) {
           let post = this.posts[i]
           if (post.public_id == this.publics_id[0].id && post.likes > pub_1_av) {
@@ -243,6 +251,16 @@ export default {
         return sum == 0 ? sum : sum / arr.length;
     },
     copy: function(url) {
+     if (event.target.className.indexOf('multiple_photo') != -1 && event.target.className.indexOf('first') != -1) {
+          // event.target.style.left = '-1000px';
+          // event.target.style.transition = 'all 1s ease-in-out';
+          event.target.classList.remove('first');
+          event.target.style.zIndex = '0';
+          let next_element = event.target.nextSibling;
+          if (next_element != null) {
+            next_element.classList.add('first');
+          }
+      }
       if (window.clipboardData && window.clipboardData.setData) {
           // IE specific code path to prevent textarea being shown while dialog is visible.
           return clipboardData.setData("Text", url); 
@@ -305,13 +323,14 @@ a {
   padding-left: 25px;
 }
 .panel-title {
-  padding-left: 1%;
+  padding-left: 2%;
   padding-top: 4px;
 }
 .panel-title a {
   margin-left: 10px;
 }
 .panel-body {
+  position: relative;
   text-align: left;
 }
 .counters {
@@ -325,11 +344,21 @@ a {
   padding-left: 10px;
   font-size: 20px
 }
+.body__text {
+  white-space: pre-wrap;
+  word-wrap: word-break;
+}
 .post__photo {
-  padding-top: 20px;
+  position: relative;
+  padding-top: 2%;
 }
 .post__photo__item {
   width: 75%
+}
+.multiple_photo {
+  margin-top: 1.5em;
+  position: absolute;
+  box-shadow: 10px 0 10px -2px #6f6868;
 }
 .scroll-down {
   opacity: 1;
@@ -356,41 +385,6 @@ a.scroll-down {
     animation: bounce 2s infinite 2s;
     -webkit-transition: all .2s ease-in;
     transition: all .2s ease-in;
-}
-
-.scroll-down:before {
-    position: absolute;
-    top: calc(50% - 3px);
-    left: calc(50% - 6px);
-    transform: rotate(135deg);
-    display: block;
-    width: 12px;
-    height: 12px;
-    content: "";
-    border: 2px solid black;
-    border-width: 0px 0 2px 2px;
-}
-
-@keyframes bounce {
-  0%,
-  100%,
-  20%,
-  50%,
-  80% {
-    -webkit-transform: translateY(0);
-    -ms-transform: translateY(0);
-    transform: translateY(0);
-  }
-  40% {
-    -webkit-transform: translateY(-10px);
-    -ms-transform: translateY(-10px);
-    transform: translateY(-10px);
-  }
-  60% {
-    -webkit-transform: translateY(-5px);
-    -ms-transform: translateY(-5px);
-    transform: translateY(-5px);
-  }
 }
 .showAll {
   position: fixed;
@@ -446,5 +440,40 @@ a.show-all {
     bottom: 10%;
     left: 5%;
     display: block;
+}
+
+.scroll-down:before {
+    position: absolute;
+    top: calc(50% - 3px);
+    left: calc(50% - 6px);
+    transform: rotate(135deg);
+    display: block;
+    width: 12px;
+    height: 12px;
+    content: "";
+    border: 2px solid black;
+    border-width: 0px 0 2px 2px;
+}
+
+@keyframes bounce {
+  0%,
+  100%,
+  20%,
+  50%,
+  80% {
+    -webkit-transform: translateY(0);
+    -ms-transform: translateY(0);
+    transform: translateY(0);
+  }
+  40% {
+    -webkit-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    transform: translateY(-10px);
+  }
+  60% {
+    -webkit-transform: translateY(-5px);
+    -ms-transform: translateY(-5px);
+    transform: translateY(-5px);
+  }
 }
 </style>
