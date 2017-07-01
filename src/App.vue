@@ -11,7 +11,7 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         <li><router-link to='/'>Kalemba</router-link></li></li>
-        <li><router-link to='/sabr'>Sabr</router-link></li></li>
+        <li><router-link to='/one'>One community posts</router-link></li></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->

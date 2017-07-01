@@ -15,7 +15,7 @@ const router = new VueRouter({
 	mode: 'history',
 	routes: [
 		{path: '/', component: Hello },
-		{path: '/sabr', component: Sabr}
+		{path: '/one', component: Sabr}
 	]
 })
 
