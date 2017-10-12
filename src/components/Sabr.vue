@@ -22,7 +22,7 @@
           <li><span>Сортировать по</span></li>
           <li class="filter_item" @click='sortBy("like")'>Лайкам</li>
           <li class="filter_item" @click='sortBy("repost")'>Репостам</li>
-          <li class="filter_item" @click='sortBy("date")'>Дате</li>
+          <!-- <li class="filter_item" @click='sortBy("date")'>Дате</li> -->
         </ul>
     </div>
     <div v-if='post.text || post.photo' class="panel panel-default" v-for='post in posts'>
@@ -85,7 +85,7 @@ export default {
       allPosts: [],
       clicked: true,
       publics_id: {
-        id:'71190418'
+        id:'73899416'
       },
       perPage: 120,
       offset: 0,
@@ -128,48 +128,54 @@ export default {
           offset: (page == 1) ? 0 : this.perPage*page,
           photo_sizes: 1,
           extended: 1,
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
           v: '5.62'
       }
       myOption.owner_id = -_this.publics_id.id
       VK.api('wall.get', myOption, function(r) {
+          console.log(r);
           arr = r.response.items;
+          console.log(arr)
           var __photo = [];
           for (var i = 0; i < arr.length; i++) {
              let size = ''
-              if (_this.checkAdvert(arr[i].text,arr[i]) && arr[i].attachments) {
-                for (var j = 0; j < arr[i].attachments.length; j++) {
-                  if (arr[i].attachments[j].type == 'photo') {
-                    __photo.push(
-                        arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
-                      )
-                    let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)
-                    let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width)
-                    size = Math.round(height/(width/553));
-                    size = Math.round(size + (size/100)*10);
+              if (_this.checkAdvert(arr[i].text,arr[i])) {
+                if ( arr[i].attachments) {
+                  for (var j = 0; j < arr[i].attachments.length; j++) {
+                    if (arr[i].attachments[j].type == 'photo') {
+                      __photo.push(
+                          arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
+                        )
+                      let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)
+                      let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width)
+                      size = Math.round(height/(width/553));
+                      size = Math.round(size + (size/100)*10);
+                    }
                   }
                 }
                 //TODO: find the biggest size by cycle and put it into size
-              let date = new Date(arr[i].date*1000);
-              let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-              _this.posts.push({
-                text: arr[i].text.replace(/\r?\n/g, '\n'),
-                photo: __photo,
-                date_to_sort: date,
-                date: post_date,
-                reposts: arr[i].reposts.count,
-                likes: arr[i].likes.count,
-                link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
-                public_id: arr[i].from_id * (-1),
-                public_name: r.response.groups[0].name,
-                public_photo: r.response.groups[0].photo_200,
-                photo_size: size
-              })
-              __photo = [];
-              size = '';
-            }
-          }
-          _this.allPosts = _this.posts;
-          _this.sort();
+                  let date = new Date(arr[i].date*1000);
+                  let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+                  console.log(arr[i]);
+                  _this.posts.push({
+                    text: arr[i].text.replace(/\r?\n/g, '\n'),
+                    photo: __photo,
+                    date_to_sort: date,
+                    date: post_date,
+                    reposts: arr[i].reposts.count,
+                    likes: arr[i].likes.count,
+                    link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
+                    public_id: arr[i].from_id * (-1),
+                    public_name: r.response.groups[0].name,
+                    public_photo: r.response.groups[0].photo_200,
+                    photo_size: size
+                  })
+                  __photo = [];
+                  size = '';
+                }
+               }
+                _this.allPosts = _this.posts;
+                setTimeout(() => {_this.sort()}, 400)
        })
     },
     scrollTop() {
@@ -420,6 +426,11 @@ a.scroll-down {
   margin: 30px auto 30px;
   padding: 0 15px;
   max-width: 1280px;
+}
+@media (max-width: 799px) and (min-width: 300px) { 
+  .showAll {
+    display: none;
+  }
 }
 
 .pagination__left, .pagination__right {
