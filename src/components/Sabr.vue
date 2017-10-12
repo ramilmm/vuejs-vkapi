@@ -21,7 +21,7 @@
         <ul class="filter_list">
           <li><span>Сортировать по</span></li>
           <li class="filter_item" @click='sortBy("like")'>Лайкам</li>
-          <li class="filter_item" @click='sortBy("repost")'>Репостам</li>
+          <li class="filter_item" @click='sortBy("views")'>Охвату</li>
           <!-- <li class="filter_item" @click='sortBy("date")'>Дате</li> -->
         </ul>
     </div>
@@ -34,7 +34,7 @@
         </h3>
       <div class="counters">
         <span class="glyphicon glyphicon-heart likes"><span class="counter">{{ post.likes }}</span></span>
-        <span class="glyphicon glyphicon-retweet reposts"><span class="counter">{{ post.reposts }}</span></span>
+        <span class="glyphicon glyphicon-eye-open reposts"><span class="counter">{{ post.views }}</span></span>
       </div>
     </div>
     <div v-if='post' class="panel-body">
@@ -129,13 +129,11 @@ export default {
           photo_sizes: 1,
           extended: 1,
           access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
-          v: '5.62'
+          v: '5.67'
       }
       myOption.owner_id = -_this.publics_id.id
       VK.api('wall.get', myOption, function(r) {
-          console.log(r);
           arr = r.response.items;
-          console.log(arr)
           var __photo = [];
           for (var i = 0; i < arr.length; i++) {
              let size = ''
@@ -156,7 +154,6 @@ export default {
                 //TODO: find the biggest size by cycle and put it into size
                   let date = new Date(arr[i].date*1000);
                   let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-                  console.log(arr[i]);
                   _this.posts.push({
                     text: arr[i].text.replace(/\r?\n/g, '\n'),
                     photo: __photo,
@@ -164,6 +161,7 @@ export default {
                     date: post_date,
                     reposts: arr[i].reposts.count,
                     likes: arr[i].likes.count,
+                    views: arr[i].views.count,
                     link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
                     public_id: arr[i].from_id * (-1),
                     public_name: r.response.groups[0].name,
@@ -286,9 +284,9 @@ export default {
           this.posts.sort((a,b) => (parseInt(b.reposts) - parseInt(a.reposts)));
           this.allPosts.sort((a,b) => (parseInt(b.reposts) - parseInt(a.reposts)));
           break;
-        case 'date':
-          this.posts.sort((a,b) => (parseInt(b.date_to_sort) - parseInt(a.date_to_sort)));
-          this.allPosts.sort((a,b) => (parseInt(b.date_to_sort) - parseInt(a.date_to_sort)));
+       case 'views':
+          this.posts.sort((a,b) => (parseInt(b.views) - parseInt(a.views)));
+          this.allPosts.sort((a,b) => (parseInt(b.views) - parseInt(a.views)));
           break;
         default:
           break;
