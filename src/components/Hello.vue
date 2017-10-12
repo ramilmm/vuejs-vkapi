@@ -6,6 +6,10 @@
       <a v-if="clicked" class="pagination__left" @click='showAll'>Показать все посты</a>
       <a v-if="!clicked" class="pagination__left" @click='filter'>Отфильтровать</a>
     </div>
+    <div class="showAll filter">
+      <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
+      <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
+    </div>
   </section>
   <ul>
     <li v-for='public in publics_id'>
@@ -89,6 +93,7 @@ export default {
       posts: [],
       allPosts: [],
       clicked: true,
+      filterChanged: true,
       publics_id: [
         {id:'71190418'},
         {id:'37466869'},
@@ -105,6 +110,9 @@ export default {
     fetchPosts(page) {
       if (!this.clicked) {
         this.clicked = true;
+      }
+      if (!this.filterChanged) {
+        this.filterChanged = true;
       }
       this.posts = []
       this.apiCall(0,page)
@@ -139,7 +147,7 @@ export default {
           offset: (page == 1) ? 0 : this.perPage*page,
           photo_sizes: 1,
           extended: 1,
-          service_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
           v: '5.67'
       }
       myOption.owner_id = -_this.publics_id[p_id].id
@@ -201,6 +209,48 @@ export default {
     filter() {
       this.clicked = !this.clicked;
       this.sort();
+      this.mix(this.posts);
+    },
+    changeFilter() {
+      console.log(this.allPosts);
+      this.filterChanged = !this.filterChanged;
+        var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
+              for (var i = 0; i < this.allPosts.length; i++) {
+                if (this.posts[i].public_id == this.publics_id[0].id) {
+                    pub_1.push(this.allPosts[i])
+                }else if (this.allPosts[i].public_id == this.publics_id[1].id) {
+                  pub_2.push(this.allPosts[i])
+                }else if (this.allPosts[i].public_id == this.publics_id[2].id) {
+                    pub_3.push(this.allPosts[i])
+                }else if (this.allPosts[i].public_id == this.publics_id[3].id) {
+                  pub_4.push(this.allPosts[i])
+                }
+                }
+                var pub_1_av = this.average(pub_1),
+                    pub_2_av = this.average(pub_2),
+                    pub_3_av = this.average(pub_3),
+                    pub_4_av = this.average(pub_4);
+
+                var res = []
+                for (var i = 0; i < this.allPosts.length; i++) {
+                  let post = this.allPosts[i]
+                  if (post.public_id == this.publics_id[0].id && post.views > pub_1_av) {
+                      res.push(post)
+                  }else if (post.public_id == this.publics_id[1].id && post.views > pub_2_av) {
+                      res.push(post)
+                  }else if (post.public_id == this.publics_id[2].id && post.views > pub_3_av) {
+                      res.push(post)
+                  }else if (post.public_id == this.publics_id[3].id && post.views > pub_4_av) {
+                      res.push(post)
+                  }
+                }
+                this.posts = res
+                this.mix(this.posts)
+      },
+    setDefaultFilter() {
+        this.filterChanged = !this.filterChanged;
+        this.sort();
+        this.mix(this.posts);
     },
     readCookie() {
      var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
@@ -229,15 +279,15 @@ export default {
     },
     sort() {
       var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-      for (var i = 0; i < this.posts.length; i++) {
-        if (this.posts[i].public_id == this.publics_id[0].id) {
-            pub_1.push(this.posts[i])
-        }else if (this.posts[i].public_id == this.publics_id[1].id) {
-          pub_2.push(this.posts[i])
-        }else if (this.posts[i].public_id == this.publics_id[2].id) {
-            pub_3.push(this.posts[i])
-        }else if (this.posts[i].public_id == this.publics_id[3].id) {
-          pub_4.push(this.posts[i])
+      for (var i = 0; i < this.allPosts.length; i++) {
+        if (this.allPosts[i].public_id == this.publics_id[0].id) {
+            pub_1.push(this.allPosts[i])
+        }else if (this.allPosts[i].public_id == this.publics_id[1].id) {
+          pub_2.push(this.allPosts[i])
+        }else if (this.allPosts[i].public_id == this.publics_id[2].id) {
+            pub_3.push(this.allPosts[i])
+        }else if (this.allPosts[i].public_id == this.publics_id[3].id) {
+          pub_4.push(this.allPosts[i])
         }
         }
         var pub_1_av = this.average(pub_1),
@@ -246,8 +296,8 @@ export default {
             pub_4_av = this.average(pub_4);
 
         var res = []
-        for (var i = 0; i < this.posts.length; i++) {
-          let post = this.posts[i]
+        for (var i = 0; i < this.allPosts.length; i++) {
+          let post = this.allPosts[i]
           if (post.public_id == this.publics_id[0].id && post.likes > pub_1_av) {
               res.push(post)
           }else if (post.public_id == this.publics_id[1].id && post.likes > pub_2_av) {
@@ -458,7 +508,9 @@ a.scroll-down {
   padding: 0 15px;
   max-width: 1280px;
 }
-
+.filter {
+  margin-top: 6.3%;
+}
 .pagination__left, .pagination__right {
   width: 20%;
 }

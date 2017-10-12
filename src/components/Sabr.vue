@@ -6,6 +6,10 @@
       <a v-if="clicked" class="pagination__left" @click='showAll'>Показать все посты</a>
       <a v-if="!clicked" class="pagination__left" @click='filter'>Отфильтровать</a>
     </div>
+     <div class="showAll filter">
+      <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
+      <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
+    </div>
   </section>
   <ul>
     <li>
@@ -84,6 +88,7 @@ export default {
       posts: [],
       allPosts: [],
       clicked: true,
+      filterChanged: true,
       publics_id: {
         id:'73899416'
       },
@@ -187,6 +192,29 @@ export default {
     filter() {
       this.clicked = !this.clicked;
       this.sort();
+      this.mix(this.posts);
+    },
+    changeFilter() {
+      this.filterChanged = !this.filterChanged;
+        var pub_1 = [];
+        for (var i = 0; i < this.allPosts.length; i++) {
+              pub_1.push(this.allPosts[i]);
+        }
+        var pub_1_av = this.average(pub_1);
+        var res = [];
+        for (var i = 0; i < this.allPosts.length; i++) {
+          let post = this.allPosts[i];
+          if (post.likes > pub_1_av) {
+              res.push(post);
+          }
+        }
+        this.posts = res;
+        this.mix(this.posts);
+      },
+    setDefaultFilter() {
+        this.filterChanged = !this.filterChanged;
+        this.sort();
+        this.mix(this.posts);
     },
     readCookie() {
      var result = document.cookie.match(new RegExp('one_pub=([^;]+)'));
@@ -213,13 +241,13 @@ export default {
     },
     sort() {
         var pub_1 = [];
-        for (var i = 0; i < this.posts.length; i++) {
-              pub_1.push(this.posts[i]);
+        for (var i = 0; i < this.allPosts.length; i++) {
+              pub_1.push(this.allPosts[i]);
         }
         var pub_1_av = this.average(pub_1);
         var res = [];
-        for (var i = 0; i < this.posts.length; i++) {
-          let post = this.posts[i];
+        for (var i = 0; i < this.allPosts.length; i++) {
+          let post = this.allPosts[i];
           if (post.likes > pub_1_av) {
               res.push(post);
           }
@@ -424,6 +452,9 @@ a.scroll-down {
   margin: 30px auto 30px;
   padding: 0 15px;
   max-width: 1280px;
+}
+.filter {
+  margin-top: 6.3%;
 }
 @media (max-width: 799px) and (min-width: 300px) { 
   .showAll {
