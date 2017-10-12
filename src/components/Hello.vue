@@ -71,7 +71,12 @@
 </template>
 
 <script>
-import Pagination from './Pagination.vue'
+import Pagination from './Pagination.vue';
+
+if (navigator.userAgent.toLowerCase().indexOf('iphone') != -1) {
+  console.log('here');
+  window.location.href = "http://vk-autopost.tk:8081";
+}
 
 VK.init({
     apiId:  5802349 // ID вашего приложения VK
