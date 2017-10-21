@@ -171,6 +171,12 @@ export default {
                     }
                   }
                 }
+               let view_count;
+                if (arr[i].views) {
+                  view_count = arr[i].views.count;
+                }else {
+                  view_count = 0;
+                }
                 //TODO: find the biggest size by cycle and put it into size
                   let date = new Date(arr[i].date*1000);
                   let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
@@ -181,7 +187,7 @@ export default {
                     date: post_date,
                     reposts: arr[i].reposts.count,
                     likes: arr[i].likes.count,
-                    views: arr[i].views.count,
+                    views: view_count,
                     link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
                     public_id: arr[i].from_id * (-1),
                     public_name: r.response.groups[0].name,
