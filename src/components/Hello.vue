@@ -166,7 +166,6 @@ export default {
       var _this = this;
       _this.posts = [];
       _this.allPosts = [];
-      console.log(arr);
       var __photo = [];
       for (var i = 0; i < arr.length; i++) {
          let size = '';
@@ -220,7 +219,6 @@ export default {
       window.scrollTo(0,0);
     },
     showAll() {
-      //TODO: FIX BUG
       this.posts = this.allPosts;
       this.mix(this.posts);
       this.clicked = !this.clicked;
@@ -231,40 +229,26 @@ export default {
       this.mix(this.posts);
     },
     changeFilter() {
-      //TODO: CHANGE THIS METHOD
-      this.filterChanged = !this.filterChanged;
-        var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-              for (var i = 0; i < this.allPosts.length; i++) {
-                if (this.posts[i].public_id == this.publics_id[0].id) {
-                    pub_1.push(this.allPosts[i])
-                }else if (this.allPosts[i].public_id == this.publics_id[1].id) {
-                  pub_2.push(this.allPosts[i])
-                }else if (this.allPosts[i].public_id == this.publics_id[2].id) {
-                    pub_3.push(this.allPosts[i])
-                }else if (this.allPosts[i].public_id == this.publics_id[3].id) {
-                  pub_4.push(this.allPosts[i])
+        this.filterChanged = !this.filterChanged;
+          var buf = [],result = [];
+        for (var i = 0; i < this.publics_id.length; i++) {
+          for (var j = 0; j < this.allPosts.length; j++) {
+            if (this.allPosts[j].public_id == this.publics_id[i].id) {
+              buf.push(this.allPosts[j]);
+            }
+            if (j == this.allPosts.length - 1) {
+              let average = this.average(buf,'views');
+              for (var k = 0; k < this.allPosts.length; k++) {
+                if (this.allPosts[k].public_id == this.publics_id[i].id && this.allPosts[k].views > average) {
+                  result.push(this.allPosts[k]);
                 }
-                }
-                var pub_1_av = this.average(pub_1),
-                    pub_2_av = this.average(pub_2),
-                    pub_3_av = this.average(pub_3),
-                    pub_4_av = this.average(pub_4);
-
-                var res = []
-                for (var i = 0; i < this.allPosts.length; i++) {
-                  let post = this.allPosts[i]
-                  if (post.public_id == this.publics_id[0].id && post.views > pub_1_av) {
-                      res.push(post)
-                  }else if (post.public_id == this.publics_id[1].id && post.views > pub_2_av) {
-                      res.push(post)
-                  }else if (post.public_id == this.publics_id[2].id && post.views > pub_3_av) {
-                      res.push(post)
-                  }else if (post.public_id == this.publics_id[3].id && post.views > pub_4_av) {
-                      res.push(post)
-                  }
-                }
-                this.posts = res
-                this.mix(this.posts)
+              }
+            }
+          }
+          buf = [];
+        }
+        this.posts = result;
+        this.mix(this.posts);
       },
     setDefaultFilter() {
         this.filterChanged = !this.filterChanged;
@@ -315,8 +299,7 @@ export default {
             buf.push(this.allPosts[j]);
           }
           if (j == this.allPosts.length - 1) {
-            let average = this.average(buf);
-            console.log(average);
+            let average = this.average(buf,'likes');
             for (var k = 0; k < this.allPosts.length; k++) {
               if (this.allPosts[k].public_id == this.publics_id[i].id && this.allPosts[k].likes > average) {
                 result.push(this.allPosts[k]);
@@ -329,10 +312,12 @@ export default {
         this.posts = result;
         this.mix(this.posts);
     },
-    average(arr) {
+    average(arr,type) {
       var sum = 0;
         for (var i = 0; i < arr.length; i++ ) 
-          sum += arr[i].likes;
+          if (type === 'likes') {
+            sum += arr[i].likes;
+          }else sum += arr[i].views;
         return sum == 0 ? sum : sum / arr.length;
     },
     copy(url) {
@@ -425,15 +410,9 @@ export default {
             
             VK.Api.call("execute", {code: code}, function(data) {
               console.log(data);
-              _this.parseResponse(data.response);
               if (data.response) {
-                  _this.allPosts = data.response;
+                  _this.parseResponse(data.response);
                   console.log('Загрузка: ' + _this.allPosts.length + '/' + _this.publics_id.length*_this.perPage);
-                  if (_this.publics_id.length*_this.perPage >  _this.allPosts.length) 
-                      setTimeout(function() { _this.executeQuery(1); }, 333); 
-                  else {
-                      console.log('done');
-                    }
               } else {
                   alert(data.error.error_msg);
               }
@@ -461,7 +440,6 @@ export default {
   },
   created() {
     this.readCookie();
-    // this.mix(this.posts);
   },
   components: {Pagination, Modal}
 }
