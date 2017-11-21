@@ -308,7 +308,6 @@ export default {
       }
       event.target.classList.add('active_item');
       this.last_active = event.target;
-      console.log(this.last_active.classList);
       switch(by_this){
         case 'like': 
           this.posts.sort((a,b) => (parseInt(b.likes) - parseInt(a.likes)));

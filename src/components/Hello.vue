@@ -1,6 +1,13 @@
 <template>
   <div class="hello">
   <section>
+    <modal
+      :show="showModal"
+      :publics_id="publics_id"
+      @close="showModal = false"
+      @save="savePublic(publics_id)"
+      ></modal>
+    <a id="show-modal" @click="showModal = true" class="add_publics_btn">Обновить список пабликов</a>
     <a href="#" class="scroll-down" @click='scrollTop'></a>
     <div class="showAll">
       <a v-if="clicked" class="pagination__left" @click='showAll'>Показать все посты</a>
@@ -11,11 +18,11 @@
       <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
     </div>
   </section>
-  <ul>
+  <!-- <ul>
     <li v-for='public in publics_id'>
       <input type="text" class="form-control" @keyup.enter='savePublic' v-model='public.id' :value='"vk.com/public" + public.id'>
     </li>
-  </ul>
+  </ul> -->
   <pagination 
       :offset="offset"
       :perPage="perPage" 
@@ -76,6 +83,7 @@
 
 <script>
 import Pagination from './Pagination.vue';
+import Modal from './Modal.vue';
 
 if (navigator.userAgent.toLowerCase().indexOf('iphone') != -1) {
   console.log('here');
@@ -98,12 +106,14 @@ export default {
         {id:'71190418'},
         {id:'37466869'},
         {id:'52870150'},
-        {id:'41032556'}
+        {id:'41032556'},
       ],
+      publics_info : [],
       perPage: 40,
       offset: 0,
       currentPage: 1,
-      last_active: ''
+      last_active: '',
+      showModal: false
     }
   },
   methods: {
@@ -114,13 +124,26 @@ export default {
       if (!this.filterChanged) {
         this.filterChanged = true;
       }
-      this.posts = []
-      this.apiCall(0,page)
-      this.apiCall(1,page)
-      this.apiCall(2,page)
-      this.apiCall(3,page)
-  
-      this.currentPage = page
+      this.executeQuery(page);
+      this.currentPage = page;
+      this.removeHighlight();
+
+    },
+    removeHighlight() {
+      var elements = document.getElementsByClassName('filter_item');
+      for (var i = 0; i < elements.length; i++) {
+        elements[i].classList.remove('active_item');
+      }
+    },
+    clear() {
+      for (var i = 0; i < this.posts.length; i++) {
+        for (var j = 0; j < this.posts.length; j++) {
+          if (this.posts[i].id == this.posts[j].id) {
+            this.posts[i].splice(j, 1);
+            console.log('DELETED');
+          }
+        }
+      }
     },
     mix(a) {
         var d,c,b = a.length;
@@ -137,77 +160,67 @@ export default {
           return false;
       }else return true;
     },
-    apiCall(p_id,page) {
-      var arr = ''
-      var buf = []
-      var _this = this
-      var myOption = {
-          owner_id: '',
-          count: this.perPage,
-          offset: (page == 1) ? 0 : this.perPage*page,
-          photo_sizes: 1,
-          extended: 1,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
-          v: '5.67'
-      }
-      myOption.owner_id = -_this.publics_id[p_id].id
-      console.log(myOption);
-      VK.api('wall.get', myOption, function(r) {
-          arr = r.response.items;
-          var __photo = [];
-          for (var i = 0; i < arr.length; i++) {
-             let size = ''
-              if (_this.checkAdvert(arr[i].text,arr[i])) {
-                if ( arr[i].attachments) {
-                  for (var j = 0; j < arr[i].attachments.length; j++) {
-                    if (arr[i].attachments[j].type == 'photo') {
-                      __photo.push(
-                          arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
-                        )
-                      let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height)
-                      let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width)
-                      size = Math.round(height/(width/553));
-                      size = Math.round(size + (size/100)*10);
-                    }
-                  }
+    parseResponse(response) {
+      var arr = response;
+      var buf = [];
+      var _this = this;
+      _this.posts = [];
+      _this.allPosts = [];
+      console.log(arr);
+      var __photo = [];
+      for (var i = 0; i < arr.length; i++) {
+         let size = '';
+          if (_this.checkAdvert(arr[i].text,arr[i])) {
+            if ( arr[i].attachments) {
+              for (var j = 0; j < arr[i].attachments.length; j++) {
+                if (arr[i].attachments[j].type == 'photo') {
+                  __photo.push(
+                      arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
+                    );
+                  let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height);
+                  let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width);
+                  //TODO: EDIT THIS ALGORITHM 
+                  size = Math.round(height/(width/553));
+                  size = Math.round(size + (size/100)*10);
                 }
-               let view_count;
-                if (arr[i].views) {
-                  view_count = arr[i].views.count;
-                }else {
-                  view_count = 0;
-                }
-                //TODO: find the biggest size by cycle and put it into size
-                  let date = new Date(arr[i].date*1000);
-                  let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-                  _this.posts.push({
-                    text: arr[i].text.replace(/\r?\n/g, '\n'),
-                    photo: __photo,
-                    date_to_sort: date,
-                    date: post_date,
-                    reposts: arr[i].reposts.count,
-                    likes: arr[i].likes.count,
-                    views: view_count,
-                    link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
-                    public_id: arr[i].from_id * (-1),
-                    public_name: r.response.groups[0].name,
-                    public_photo: r.response.groups[0].photo_200,
-                    photo_size: size
-                  })
-                  __photo = [];
-                  size = '';
-                }
-               }
-              if (myOption.owner_id == -_this.publics_id[3].id) {
-                _this.allPosts = _this.posts;
-                setTimeout(() => {_this.sort()}, 400)
               }
-       })
+            }
+           let view_count;
+            if (arr[i].views) {
+              view_count = arr[i].views.count;
+            }else {
+              view_count = 0;
+            }
+              let date = new Date(arr[i].date*1000);
+              let post_date = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+              _this.posts.push({
+                id: arr[i].id,
+                text: arr[i].text.replace(/\r?\n/g, '\n'),
+                photo: __photo,
+                date_to_sort: date,
+                date: post_date,
+                reposts: arr[i].reposts.count,
+                likes: arr[i].likes.count,
+                views: view_count,
+                link_to_post: 'https://vk.com/wall' + arr[i].from_id + '_' + arr[i].id,
+                public_id: arr[i].from_id * (-1),
+                public_name: _this.publics_info.find(o => o.id == (-1)*arr[i].from_id).name,
+                public_photo: _this.publics_info.find(o => o.id == (-1)*arr[i].from_id).photo_200,
+                photo_size: size
+              })
+              __photo = [];
+              size = '';
+            }
+          }
+          _this.allPosts = _this.posts;
+          _this.sort();
+          console.log('prepared posts: ', _this.posts)    
     },
     scrollTop() {
       window.scrollTo(0,0);
     },
     showAll() {
+      //TODO: FIX BUG
       this.posts = this.allPosts;
       this.mix(this.posts);
       this.clicked = !this.clicked;
@@ -218,7 +231,7 @@ export default {
       this.mix(this.posts);
     },
     changeFilter() {
-      console.log(this.allPosts);
+      //TODO: CHANGE THIS METHOD
       this.filterChanged = !this.filterChanged;
         var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
               for (var i = 0; i < this.allPosts.length; i++) {
@@ -269,13 +282,24 @@ export default {
         result = decodeURIComponent(result[1]);
         result = result.split(':');
         for (var i = 0; i < result.length; i++) {
-          this.publics_id[i].id = result[i];
+          if (i >= this.publics_id.length) {
+            this.publics_id.push({ id: result[i] });
+          }else { 
+            this.publics_id[i].id = result[i];
+          }
         }
-        this.fetchPosts(1);
+        this.getPublicInfo();
+        this.executeQuery(1);
     }
     },
     setCookie() {
-      var value = this.publics_id[0].id + ":" + this.publics_id[1].id + ":" + this.publics_id[2].id + ":" + this.publics_id[3].id;
+      var value = '';
+      for (var i = 0; i <= this.publics_id.length - 1; i++) {
+        value = value.concat(this.publics_id[i].id);
+        if (i != this.publics_id.length - 1) {
+          value = value.concat(":");
+        }
+      }
       var expires = "";
       var date = new Date();
       date.setTime(date.getTime() + (1000*24*60*60*1000));
@@ -284,38 +308,26 @@ export default {
       console.log('set up cookie')
     },
     sort() {
-      var pub_1 = [],pub_2 = [],pub_3 = [],pub_4 = []
-      for (var i = 0; i < this.allPosts.length; i++) {
-        if (this.allPosts[i].public_id == this.publics_id[0].id) {
-            pub_1.push(this.allPosts[i])
-        }else if (this.allPosts[i].public_id == this.publics_id[1].id) {
-          pub_2.push(this.allPosts[i])
-        }else if (this.allPosts[i].public_id == this.publics_id[2].id) {
-            pub_3.push(this.allPosts[i])
-        }else if (this.allPosts[i].public_id == this.publics_id[3].id) {
-          pub_4.push(this.allPosts[i])
-        }
-        }
-        var pub_1_av = this.average(pub_1),
-            pub_2_av = this.average(pub_2),
-            pub_3_av = this.average(pub_3),
-            pub_4_av = this.average(pub_4);
-
-        var res = []
-        for (var i = 0; i < this.allPosts.length; i++) {
-          let post = this.allPosts[i]
-          if (post.public_id == this.publics_id[0].id && post.likes > pub_1_av) {
-              res.push(post)
-          }else if (post.public_id == this.publics_id[1].id && post.likes > pub_2_av) {
-              res.push(post)
-          }else if (post.public_id == this.publics_id[2].id && post.likes > pub_3_av) {
-              res.push(post)
-          }else if (post.public_id == this.publics_id[3].id && post.likes > pub_4_av) {
-              res.push(post)
+      var buf = [],result = [];
+      for (var i = 0; i < this.publics_id.length; i++) {
+        for (var j = 0; j < this.allPosts.length; j++) {
+          if (this.allPosts[j].public_id == this.publics_id[i].id) {
+            buf.push(this.allPosts[j]);
+          }
+          if (j == this.allPosts.length - 1) {
+            let average = this.average(buf);
+            console.log(average);
+            for (var k = 0; k < this.allPosts.length; k++) {
+              if (this.allPosts[k].public_id == this.publics_id[i].id && this.allPosts[k].likes > average) {
+                result.push(this.allPosts[k]);
+              }
+            }
           }
         }
-        this.posts = res
-        this.mix(this.posts)
+        buf = [];
+      }
+        this.posts = result;
+        this.mix(this.posts);
     },
     average(arr) {
       var sum = 0;
@@ -325,10 +337,10 @@ export default {
     },
     copy(url) {
       if (event.target.className.indexOf('multiple_photo') != -1 && event.target.className.indexOf('first') != -1) {
-          event.target.style.left = '-1000px';
-          event.target.style.transition = 'all .56s ease-in-out';
-          // event.target.classList.remove('first');
-          // event.target.style.zIndex = '0';
+          // event.target.style.left = '-1000px';
+          // event.target.style.transition = 'all .56s ease-in-out';
+          event.target.classList.remove('first');
+          event.target.style.zIndex = '0';
           let next_element = event.target.nextSibling;
           if (next_element != null) {
             next_element.classList.add('first');
@@ -354,7 +366,9 @@ export default {
           }
       }
     },
-    savePublic() {
+    savePublic(publics_id) {
+      this.publics_id = publics_id;
+      this.getPublicInfo();
       this.setCookie();
       this.fetchPosts(this.currentPage);
     },
@@ -380,13 +394,76 @@ export default {
         default:
           break;
       }
+    },
+    executeQuery(page) {
+    const _this = this;
+    var publics = '';
+      for (var i = 0; i <= this.publics_id.length - 1; i++) {
+        publics = publics.concat(this.publics_id[i].id);
+        if (i != this.publics_id.length - 1) {
+          publics = publics.concat(":");
+        }
+      }
+    let size = _this.publics_id.length;
+    var myOption = {
+          count: _this.perPage,
+          offset: (page == 1) ? 0 : _this.perPage*page,
+          photo_sizes: 1,
+          extended: 1,
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          v: '5.69'
+      }
+      let count = 1;
+    var code =  'var posts = API.wall.get({"owner_id": ' + -_this.publics_id[0].id + ', "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+            + 'var i = 1;'
+            + 'var publics_id =\"' + publics + '\";'
+            + 'while (i < ' + size + ') {'
+              + 'posts = posts + API.wall.get({"owner_id": -publics_id.split(\":\")[i], "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+            +   'i = i + 1;'
+            + '};'
+            + 'return posts;'; 
+            
+            VK.Api.call("execute", {code: code}, function(data) {
+              console.log(data);
+              _this.parseResponse(data.response);
+              if (data.response) {
+                  _this.allPosts = data.response;
+                  console.log('Загрузка: ' + _this.allPosts.length + '/' + _this.publics_id.length*_this.perPage);
+                  if (_this.publics_id.length*_this.perPage >  _this.allPosts.length) 
+                      setTimeout(function() { _this.executeQuery(1); }, 333); 
+                  else {
+                      console.log('done');
+                    }
+              } else {
+                  alert(data.error.error_msg);
+              }
+          });
+    },
+    getPublicInfo() {
+      var _this = this;
+      var publics = '';
+      for (var i = 0; i <= this.publics_id.length - 1; i++) {
+        publics = publics.concat(this.publics_id[i].id);
+        if (i != this.publics_id.length - 1) {
+          publics = publics.concat(",");
+        }
+      }
+      var myOption = {
+          group_ids: publics,
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          v: '5.69',
+          fields: 'id,name,photo_200'
+      }
+      VK.api("groups.getById", myOption, function(data) {
+         _this.publics_info = data.response;
+      });
     }
   },
   created() {
     this.readCookie();
-    this.mix(this.posts);
+    // this.mix(this.posts);
   },
-  components: {Pagination}
+  components: {Pagination, Modal}
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -596,5 +673,27 @@ a.show-all {
     -ms-transform: translateY(-5px);
     transform: translateY(-5px);
   }
+}
+.add_publics_btn {
+  cursor: pointer;
+  color: #999;
+  padding: 0 20px;
+  max-width: 160px;
+  background-color: transparent;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  text-decoration: none;
+  margin: 0 6px;
+  transition: all .2s ease-in-out;
+  text-align: center;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  line-height: 42px;
+  height: 44px;
+  font-size: 22px;
+}
+.add_publics_btn:hover {
+  border-color: #ea4c89;
+  color: #ea4c89;
 }
 </style>
