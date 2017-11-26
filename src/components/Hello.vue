@@ -36,6 +36,7 @@
           <!-- <li class="filter_item" @click='sortBy("date")'>Дате</li> -->
         </ul>
     </div>
+    <i v-show="loading" class="fa fa-spinner fa-spin fa-3x"></i>
     <div v-if='post.text || post.photo' class="panel panel-default" v-for='post in posts'>
     <div class="panel-heading">
       <img :src='post.public_photo' width="25px" height="25px">
@@ -98,6 +99,7 @@ export default {
   name: 'hello',
   data () {
     return {
+      loading: false,
       posts: [],
       allPosts: [],
       clicked: true,
@@ -212,6 +214,7 @@ export default {
               size = '';
             }
           }
+          _this.loading = false;
           _this.allPosts = _this.posts;
           _this.sort();
           console.log('prepared posts: ', _this.posts)    
@@ -382,6 +385,7 @@ export default {
     },
     executeQuery(page) {
       const _this = this;
+      _this.posts = [];
       var publics = '';
         for (var i = 0; i <= this.publics_id.length - 1; i++) {
           publics = publics.concat(this.publics_id[i].id);
@@ -407,7 +411,7 @@ export default {
               +   'i = i + 1;'
               + '};'
               + 'return posts;'; 
-              
+              _this.loading = true;
               VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
                 console.log(data);
                 if (data.response) {
