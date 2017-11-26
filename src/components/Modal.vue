@@ -12,7 +12,7 @@
                         <label>
                           <a @click="removePublic(public.id)"><span class="glyphicon glyphicon-remove-circle"/></a>
                         </label>
-                        <input type="text" class="form-control" v-model='public.id' :value='"vk.com/public" + public.id'>
+                        <input type="text" class="form-control" v-model='public.id'>
                       </div>
                     </li>
                     

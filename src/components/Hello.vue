@@ -118,6 +118,7 @@ export default {
   },
   methods: {
     fetchPosts(page) {
+      this.getPublicInfo();
       if (!this.clicked) {
         this.clicked = true;
       }
@@ -272,8 +273,7 @@ export default {
             this.publics_id[i].id = result[i];
           }
         }
-        this.getPublicInfo();
-        this.executeQuery(1);
+        this.fetchPosts(1);
     }
     },
     setCookie() {
@@ -381,42 +381,42 @@ export default {
       }
     },
     executeQuery(page) {
-    const _this = this;
-    var publics = '';
-      for (var i = 0; i <= this.publics_id.length - 1; i++) {
-        publics = publics.concat(this.publics_id[i].id);
-        if (i != this.publics_id.length - 1) {
-          publics = publics.concat(":");
+      const _this = this;
+      var publics = '';
+        for (var i = 0; i <= this.publics_id.length - 1; i++) {
+          publics = publics.concat(this.publics_id[i].id);
+          if (i != this.publics_id.length - 1) {
+            publics = publics.concat(":");
+          }
         }
-      }
-    let size = _this.publics_id.length;
-    var myOption = {
-          count: _this.perPage,
-          offset: (page == 1) ? 0 : _this.perPage*page,
-          photo_sizes: 1,
-          extended: 1,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
-          v: '5.69'
-      }
-      let count = 1;
-    var code =  'var posts = API.wall.get({"owner_id": ' + -_this.publics_id[0].id + ', "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
-            + 'var i = 1;'
-            + 'var publics_id =\"' + publics + '\";'
-            + 'while (i < ' + size + ') {'
-              + 'posts = posts + API.wall.get({"owner_id": -publics_id.split(\":\")[i], "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
-            +   'i = i + 1;'
-            + '};'
-            + 'return posts;'; 
-            
-            VK.Api.call("execute", {code: code}, function(data) {
-              console.log(data);
-              if (data.response) {
-                  _this.parseResponse(data.response);
-                  console.log('Загрузка: ' + _this.allPosts.length + '/' + _this.publics_id.length*_this.perPage);
-              } else {
-                  alert(data.error.error_msg);
-              }
-          });
+      let size = _this.publics_id.length;
+      var myOption = {
+            count: _this.perPage,
+            offset: (page == 1) ? 0 : _this.perPage*page,
+            photo_sizes: 1,
+            extended: 1,
+            access_token: '3192b4e8bce78bb9a9622b54941710405f8213557503c62a69110dabaee965eba5905113aa8c6996a62dd',
+            v: '5.69'
+        }
+        let count = 1;
+      var code =  'var posts = API.wall.get({"owner_id": ' + -_this.publics_id[0].id + ', "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              + 'var i = 1;'
+              + 'var publics_id =\"' + publics + '\";'
+              + 'while (i < ' + size + ') {'
+                + 'posts = posts + API.wall.get({"owner_id": -publics_id.split(\":\")[i], "v":' + myOption.v + ', "extended":' + myOption.extended + ', "count":' + _this.perPage + ', "offset": ' + myOption.offset + ', "photo_sizes":' + myOption.photo_sizes + ', "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              +   'i = i + 1;'
+              + '};'
+              + 'return posts;'; 
+              
+              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
+                console.log(data);
+                if (data.response) {
+                    _this.parseResponse(data.response);
+                    console.log('Загрузка: ' + _this.allPosts.length + '/' + _this.publics_id.length*_this.perPage);
+                } else {
+                    alert(data.error.error_msg);
+                }
+            });
     },
     getPublicInfo() {
       var _this = this;
@@ -433,8 +433,10 @@ export default {
           v: '5.69',
           fields: 'id,name,photo_200'
       }
+
       VK.api("groups.getById", myOption, function(data) {
          _this.publics_info = data.response;
+         console.log(data);
       });
     }
   },
