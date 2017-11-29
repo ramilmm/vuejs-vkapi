@@ -105,10 +105,10 @@ export default {
       clicked: true,
       filterChanged: true,
       publics_id: [
-        {id:'71190418'},
-        {id:'37466869'},
-        {id:'52870150'},
-        {id:'41032556'},
+        {name: 'Moréna.🍃',id:'71190418'},
+        {name: 'Sabr.',id:'37466869'},
+        {name: '365 new days',id:'52870150'},
+        {name: 'mimishka...🌸',id:'41032556'},
       ],
       publics_info : [],
       perPage: 40,
@@ -437,11 +437,20 @@ export default {
           v: '5.69',
           fields: 'id,name,photo_200'
       }
-
       VK.api("groups.getById", myOption, function(data) {
          _this.publics_info = data.response;
-         console.log(data);
+         _this.parsePubs();
       });
+  
+    },
+    parsePubs() {
+      for (var i = 0; i < this.publics_id.length; i++) {
+        for (var k = 0; k < this.publics_info.length; k++) {
+           if (parseInt(this.publics_id[i].id) == this.publics_info[k].id) {
+              this.publics_id[i].name = this.publics_info[k].name;
+           }
+        }
+      }
     }
   },
   created() {

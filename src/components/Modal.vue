@@ -8,11 +8,14 @@
                 <div class="modal-body">
                   <ol class="public_list">
                     <li v-for='public in publics_id'>
+                      <div>
+                        <span>{{ public.name }}</span>
+                      </div>
                       <div class="list_item">
                         <label>
                           <a @click="removePublic(public.id)"><span class="glyphicon glyphicon-remove-circle"/></a>
                         </label>
-                        <input type="text" class="form-control" v-model='public.id'>
+                        <input type="text" class="form-control" v-model='public.id' />
                       </div>
                     </li>
                     
@@ -66,7 +69,7 @@ export default {
       this.close();
     },
     addPublic() {
-      this.publics_id.push({ id: '' });
+      this.publics_id.push({ name: '', id: '' });
     },
     removePublic(id) {
       for (var i = 0; i < this.publics_id.length; i++) {

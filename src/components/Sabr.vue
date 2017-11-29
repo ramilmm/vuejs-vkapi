@@ -189,7 +189,7 @@ export default {
                }
                _this.loading = false;
                 _this.allPosts = _this.posts;
-                setTimeout(() => {_this.sort()}, 400)
+                setTimeout(() => {_this.sort()}, 400);
        })
     },
     scrollTop() {
