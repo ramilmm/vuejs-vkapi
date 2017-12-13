@@ -33,6 +33,7 @@
           <li><span>Сортировать по</span></li>
           <li class="filter_item" @click='sortBy("like")'>Лайкам</li>
           <li class="filter_item" @click='sortBy("views")'>Охвату</li>
+          <li class="filter_item" @click='sortBy("lpa")'>LPA</li>
           <!-- <li class="filter_item" @click='sortBy("date")'>Дате</li> -->
         </ul>
     </div>
@@ -47,6 +48,7 @@
       <div class="counters">
         <span class="glyphicon glyphicon-heart likes"><span class="counter">{{ post.likes }}</span></span>
         <span class="glyphicon glyphicon-eye-open reposts"><span class="counter">{{ post.views }}</span></span>
+        <!-- <span class="glyphicon glyphicon-eye-open reposts"><span class="counter">{{ post.like_per_average }}</span></span> -->
       </div>
     </div>
     <div v-if='post' class="panel-body">
@@ -208,7 +210,8 @@ export default {
                 public_id: arr[i].from_id * (-1),
                 public_name: _this.publics_info.find(o => o.id == (-1)*arr[i].from_id).name,
                 public_photo: _this.publics_info.find(o => o.id == (-1)*arr[i].from_id).photo_200,
-                photo_size: size
+                photo_size: size,
+                like_per_average: ''
               })
               __photo = [];
               size = '';
@@ -305,6 +308,7 @@ export default {
             let average = this.average(buf,'likes');
             for (var k = 0; k < this.allPosts.length; k++) {
               if (this.allPosts[k].public_id == this.publics_id[i].id && this.allPosts[k].likes > average) {
+                this.allPosts[k].like_per_average = this.allPosts[k].likes/average;
                 result.push(this.allPosts[k]);
               }
             }
@@ -379,6 +383,9 @@ export default {
           this.posts.sort((a,b) => (parseInt(b.views) - parseInt(a.views)));
           this.allPosts.sort((a,b) => (parseInt(b.views) - parseInt(a.views)));
           break;
+        case 'lpa':
+          this.posts.sort((a,b) => (parseFloat(b.like_per_average) - parseFloat(a.like_per_average)));
+          this.allPosts.sort((a,b) => (parseFloat(b.like_per_average) - parseFloat(a.like_per_average)));
         default:
           break;
       }
@@ -454,7 +461,9 @@ export default {
     }
   },
   created() {
+    let _this = this;
     this.readCookie();
+    setTimeout(function () { _this.fetchPosts(1) },500);
   },
   components: {Pagination, Modal}
 }
