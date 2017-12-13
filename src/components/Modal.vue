@@ -7,8 +7,8 @@
                 </div>
                 <div class="modal-body">
                   <ol class="public_list">
-                    <li v-for='public in publics_id'>
-                      <div>
+                    <li class="liItem" v-for='public in publics_id'>
+                      <div class="name_block">
                         <span>{{ public.name }}</span>
                       </div>
                       <div class="list_item">
@@ -182,6 +182,10 @@ export default {
 .glyphicon-remove-circle {
   color: red;
 }
+.list_item {
+  flex: 1;
+  
+}
 .list_item label{
   float: right;
   width: 20%;
@@ -190,6 +194,13 @@ export default {
 .list_item input {
   display: block;
   width: 80%;
+}
+.liItem {
+  display: flex;
+}
+.name_block {
+  flex: 1;
+  text-align: left;
 }
 
 </style>
