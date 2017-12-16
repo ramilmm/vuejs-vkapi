@@ -17,6 +17,10 @@
       <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
       <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
     </div>
+    <div class="fitlerByPublic">
+      <a class="pagination__left" @click='filterByPublic'>Отфильтровать по паблику</a>
+      <a class="pagination__left" @click='returnSourceFilter'>Отмена</a>
+    </div>
   </section>
   <!-- <ul>
     <li v-for='public in publics_id'>
@@ -89,7 +93,6 @@ import Pagination from './Pagination.vue';
 import Modal from './Modal.vue';
 
 if (navigator.userAgent.toLowerCase().indexOf('iphone') != -1) {
-  console.log('here');
   window.location.href = "http://vk-autopost.tk:8081";
 }
 
@@ -113,6 +116,7 @@ export default {
         {name: 'mimishka...🌸',id:'41032556'},
       ],
       publics_info : [],
+      mypublic_id: '71190418',
       perPage: 40,
       offset: 0,
       currentPage: 1,
@@ -458,7 +462,32 @@ export default {
            }
         }
       }
-    }
+    },
+    filterByPublic() {
+      var _this = this;
+      var myOption = {
+            owner_id: -_this.mypublic_id,
+            count: 675,
+            offset: 0,
+            access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+            v: '5.69'
+        }
+
+        VK.api("wall.get", myOption, function(data) {
+          console.log('response: ',data.response.items.length);
+          for (var i = 0; i < _this.allPosts; i++) {
+            for (var j = 0; j < data.response.items; j++) {
+              if (_this.allPosts[i].text == data.response[j].items.text) {
+                console.log('text: ',data.response[j].items.text);
+              }
+            }
+          }
+        });
+
+    },
+    returnSourceFilter() {
+      console.log('return');
+    },
   },
   created() {
     let _this = this;
@@ -595,6 +624,9 @@ a.scroll-down {
 }
 .filter {
   margin-top: 6.3%;
+}
+.fitlerByPublic {
+  margin-top: 12.3%;
 }
 .pagination__left, .pagination__right {
   width: 20%;
