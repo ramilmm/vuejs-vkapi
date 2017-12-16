@@ -465,28 +465,55 @@ export default {
     },
     filterByPublic() {
       var _this = this;
-      var myOption = {
-            owner_id: -_this.mypublic_id,
-            count: 675,
-            offset: 0,
-            access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
-            v: '5.69'
-        }
 
-        VK.api("wall.get", myOption, function(data) {
-          console.log('response: ',data.response.items.length);
-          for (var i = 0; i < _this.allPosts; i++) {
-            for (var j = 0; j < data.response.items; j++) {
-              if (_this.allPosts[i].text == data.response[j].items.text) {
-                console.log('text: ',data.response[j].items.text);
-              }
-            }
-          }
-        });
+      var myOption = {
+          owner_id: -_this.mypublic_id,
+          count: 100,
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          v: '5.69'
+      }
+      let count = 1;
+      var code = 'var offset = 0;' 
+              + 'var posts = API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              + 'var i = 1;'
+              + 'while (i < 7) {'
+                + 'posts = posts + API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              +   'i = i + 1;'
+              +   'offset = offset + 100;'
+              + '};'
+              + 'return posts;'; 
+              _this.loading = true;
+              var buf = [];
+              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
+                if (data.response) {
+                  for (var i = 0; i < _this.posts.length; i++) {
+                    for (var j = 0; j < data.response.length; j++) {
+                      if (_this.posts[i].text.length > 1 && _this.posts[i].text == data.response[j].text) {
+                        buf.push(data.response[j].text);
+                        break;
+                      }
+                    }
+                  }
+                  //TODO: optimize algorithm
+                  console.log(_this.posts.length);
+                  for (var i = 0; i < buf.length; i++) {
+                    for (var j = 0; j < _this.posts.length; j++) {
+                      if (buf[i] == _this.posts[j].text) {
+                        _this.posts.splice(j,1);
+                        console.log('spliced');
+                      }
+                    }
+                  }
+                  console.log(_this.posts.length);
+                  _this.loading = false;
+                } else {
+                    alert(data.error.error_msg);
+                }
+            });
 
     },
     returnSourceFilter() {
-      console.log('return');
+      this.sort();
     },
   },
   created() {
