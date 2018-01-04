@@ -10,6 +10,16 @@
       <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
       <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
     </div>
+    <div class="right_panel fitlerByPublic">
+      <div class="filter_btn">
+        <a v-if="!filterMyPublic" class="mypub_btn" @click='filterByPublic'>Удалить недавние</a>
+        <a v-if="filterMyPublic" class="mypub_btn" @click='returnSourceFilter'>Отмена</a>
+      </div>
+      <br/>
+      <div class="mypub">
+        <input type="text" class="form-control" @keyup.enter="saveMyPub" v-model="mypublic_id" placeholder="Вставьте id своего паблика" />
+      </div>
+    </div>
   </section>
   <ul>
     <li>
@@ -97,6 +107,8 @@ export default {
       },
       perPage: 120,
       offset: 0,
+      filterMyPublic: false,
+      mypublic_id: '',
       currentPage: 1,
       last_active: ''
     }
@@ -105,6 +117,12 @@ export default {
     fetchPosts(page) {
       if (!this.clicked) {
         this.clicked = true;
+      }
+      if (!this.filterChanged) {
+        this.filterChanged = true;
+      }      
+      if (this.filterMyPublic) {
+        this.filterMyPublic = false;
       }
       this.posts = []
       this.loading = true;
@@ -229,6 +247,8 @@ export default {
     },
     readCookie() {
      var result = document.cookie.match(new RegExp('one_pub=([^;]+)'));
+     var mypub = document.cookie.match(new RegExp('mypub=([^;]+)'));
+     this.mypublic_id = decodeURIComponent(mypub[1]);
      if (result == undefined || result == '') {
         console.log('set up cookie')
         this.setCookie();
@@ -243,11 +263,13 @@ export default {
     },
     setCookie() {
       var value = this.publics_id.id;
+      var mypub = "mypub=" + this.mypublic_id;
       var expires = "";
       var date = new Date();
       date.setTime(date.getTime() + (1000*24*60*60*1000));
       expires = "; expires=" + date.toUTCString();
       document.cookie = "one_pub=" + value + expires + "; path=/";
+      document.cookie = mypub + expires + "; path=/";
       console.log('set up cookie')
     },
     sort() {
@@ -307,6 +329,9 @@ export default {
       this.setCookie();
       this.fetchPosts(this.currentPage);
     },
+     saveMyPub() {
+      this.setCookie();
+    },
     sortBy(by_this) {
       if (this.last_active && this.last_active.classList.value.indexOf('active_item') !== -1 ) {
         this.last_active.classList.remove('active_item');
@@ -329,7 +354,61 @@ export default {
         default:
           break;
       }
-    }
+    },
+    filterByPublic() {
+      var _this = this;
+
+      var myOption = {
+          owner_id: -_this.mypublic_id,
+          count: 100,
+          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          v: '5.69'
+      }
+      let count = 1;
+      var code = 'var offset = 0;' 
+              + 'var posts = API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              + 'var i = 1;'
+              + 'while (i < 7) {'
+                + 'posts = posts + API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
+              +   'i = i + 1;'
+              +   'offset = offset + 100;'
+              + '};'
+              + 'return posts;'; 
+              _this.loading = true;
+              var buf = [];
+              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
+                if (data.response) {
+                  for (var i = 0; i < _this.posts.length; i++) {
+                    for (var j = 0; j < data.response.length; j++) {
+                      if (_this.posts[i].text.length > 1 && _this.posts[i].text == data.response[j].text) {
+                        buf.push(data.response[j].text);
+                        break;
+                      }
+                    }
+                  }
+                  //TODO: optimize algorithm
+                  for (var i = 0; i < buf.length; i++) {
+                    for (var j = 0; j < _this.posts.length; j++) {
+                      if (buf[i] == _this.posts[j].text) {
+                        _this.posts.splice(j,1);
+                        console.log('spliced');
+                      }
+                    }
+                  }
+
+                  console.log(_this.posts.length);
+                  _this.loading = false;
+                  _this.filterMyPublic = true;
+                } else {
+                    alert(data.error.error_msg);
+                }
+            });
+
+    },
+    returnSourceFilter() {
+      this.filterMyPublic = false;
+      this.sort();
+    },
   },
   created() {
     this.readCookie();
@@ -551,5 +630,42 @@ a.show-all {
     -ms-transform: translateY(-5px);
     transform: translateY(-5px);
   }
+}
+.filter {
+  margin-top: 6.3%;
+}
+.right_panel {
+  position: fixed;
+  display: block;
+  left: 82%;
+  background-color: #f2f1f085;
+  border-radius: 14px;
+  margin-top: 2.3%;
+  border: 1px solid #fcb6d2;
+}
+.mypub_btn {
+  justify-content: space-between;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-decoration: none;
+  margin: 0 41px;
+  transition: all .2s ease-in-out;
+  line-height: 42px;
+  color: #999;
+  font-size: 1.20em;
+  cursor: pointer;
+  padding: 4px 3px;
+  background-color: #fff;
+}
+.filter_btn a:hover {
+  color: #EA4C97;
+  border: 1px solid #EA4C97;
+}
+.filter_btn {
+  padding-top: 10px;
+}
+.mypub {
+  padding: 11px;
+  margin-top: -17px;
 }
 </style>

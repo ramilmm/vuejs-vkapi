@@ -4,6 +4,7 @@
     <modal
       :show="showModal"
       :publics_id="publics_id"
+      :mypublic_id="mypublic_id"
       @close="showModal = false"
       @save="savePublic(publics_id)"
       ></modal>
@@ -17,16 +18,18 @@
       <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
       <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
     </div>
-    <div class="fitlerByPublic">
-      <a class="pagination__left" @click='filterByPublic'>Отфильтровать по паблику</a>
-      <a class="pagination__left" @click='returnSourceFilter'>Отмена</a>
+    <div class="right_panel fitlerByPublic">
+      <div class="filter_btn">
+        <a v-if="!filterMyPublic" class="mypub_btn" @click='filterByPublic'>Удалить недавние</a>
+        <a v-if="filterMyPublic" class="mypub_btn" @click='returnSourceFilter'>Отмена</a>
+      </div>
+      <br/>
+      <div class="mypub">
+        <input type="text" class="form-control" @keyup.enter="saveMyPub" v-model="mypublic_id" placeholder="Вставьте id своего паблика" />
+      </div>
     </div>
   </section>
-  <!-- <ul>
-    <li v-for='public in publics_id'>
-      <input type="text" class="form-control" @keyup.enter='savePublic' v-model='public.id' :value='"vk.com/public" + public.id'>
-    </li>
-  </ul> -->
+  
   <pagination 
       :offset="offset"
       :perPage="perPage" 
@@ -116,7 +119,8 @@ export default {
         {name: 'mimishka...🌸',id:'41032556'},
       ],
       publics_info : [],
-      mypublic_id: '71190418',
+      mypublic_id: '',
+      filterMyPublic: false,
       perPage: 40,
       offset: 0,
       currentPage: 1,
@@ -133,6 +137,9 @@ export default {
       if (!this.filterChanged) {
         this.filterChanged = true;
       }
+        if (this.filterMyPublic) {
+          this.filterMyPublic = false;
+        }
       this.executeQuery(page);
       this.currentPage = page;
       this.removeHighlight();
@@ -268,6 +275,8 @@ export default {
     },
     readCookie() {
      var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
+     var mypub = document.cookie.match(new RegExp('mypub=([^;]+)'));
+     this.mypublic_id = decodeURIComponent(mypub[1]);
      if (result == undefined || result == '') {
         console.log('set up cookie')
         this.setCookie();
@@ -294,11 +303,13 @@ export default {
           value = value.concat(":");
         }
       }
+      var mypub = "mypub=" + this.mypublic_id;
       var expires = "";
       var date = new Date();
       date.setTime(date.getTime() + (1000*24*60*60*1000));
       expires = "; expires=" + date.toUTCString();
       document.cookie = "pubs=" + value + expires + "; path=/";
+      document.cookie = mypub + expires + "; path=/";
       console.log('set up cookie')
     },
     sort() {
@@ -367,6 +378,9 @@ export default {
       this.getPublicInfo();
       this.setCookie();
       this.fetchPosts(this.currentPage);
+    },
+    saveMyPub() {
+      this.setCookie();
     },
     sortBy(by_this) {
       if (this.last_active && this.last_active.classList.value.indexOf('active_item') !== -1 ) {
@@ -495,7 +509,6 @@ export default {
                     }
                   }
                   //TODO: optimize algorithm
-                  console.log(_this.posts.length);
                   for (var i = 0; i < buf.length; i++) {
                     for (var j = 0; j < _this.posts.length; j++) {
                       if (buf[i] == _this.posts[j].text) {
@@ -504,8 +517,10 @@ export default {
                       }
                     }
                   }
+
                   console.log(_this.posts.length);
                   _this.loading = false;
+                  _this.filterMyPublic = true;
                 } else {
                     alert(data.error.error_msg);
                 }
@@ -513,6 +528,7 @@ export default {
 
     },
     returnSourceFilter() {
+      this.filterMyPublic = false;
       this.sort();
     },
   },
@@ -652,8 +668,39 @@ a.scroll-down {
 .filter {
   margin-top: 6.3%;
 }
-.fitlerByPublic {
-  margin-top: 12.3%;
+.right_panel {
+  position: fixed;
+  display: block;
+  left: 82%;
+  background-color: #f2f1f085;
+  border-radius: 14px;
+  margin-top: 2.3%;
+  border: 1px solid #fcb6d2;
+}
+.mypub_btn {
+  justify-content: space-between;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-decoration: none;
+  margin: 0 41px;
+  transition: all .2s ease-in-out;
+  line-height: 42px;
+  color: #999;
+  font-size: 1.20em;
+  cursor: pointer;
+  padding: 4px 3px;
+  background-color: #fff;
+}
+.filter_btn a:hover {
+  color: #EA4C97;
+  border: 1px solid #EA4C97;
+}
+.filter_btn {
+  padding-top: 10px;
+}
+.mypub {
+  padding: 11px;
+  margin-top: -17px;
 }
 .pagination__left, .pagination__right {
   width: 20%;

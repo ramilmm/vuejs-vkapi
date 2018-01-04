@@ -48,12 +48,16 @@ export default {
       publics_id: {
         type: Array,
         default: []
+      },
+      mypublic_id: {
+        type: String,
+        default: ''
       }
   	},
    data: function () {
     return {
       title: '',
-      body: ''
+      body: '',
     };
   },
   methods: {
@@ -64,8 +68,6 @@ export default {
     },
     saveList() {
       this.$emit('save', this.publics_id);
-      console.log(this.publics_id);
-      
       this.close();
     },
     addPublic() {
