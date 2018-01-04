@@ -276,7 +276,9 @@ export default {
     readCookie() {
      var result = document.cookie.match(new RegExp('pubs=([^;]+)'));
      var mypub = document.cookie.match(new RegExp('mypub=([^;]+)'));
-     this.mypublic_id = decodeURIComponent(mypub[1]);
+     if (mypub != '' && mypub) {
+      this.mypublic_id = decodeURIComponent(mypub[1]);
+     }
      if (result == undefined || result == '') {
         console.log('set up cookie')
         this.setCookie();
