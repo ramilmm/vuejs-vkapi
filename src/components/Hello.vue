@@ -18,7 +18,7 @@
       <a v-if="!filterChanged" class="pagination__left" @click='setDefaultFilter'>Отбор по лайкам</a>
       <a v-if="filterChanged" class="pagination__left" @click='changeFilter'>Отбор по охвату</a>
     </div>
-    <div class="right_panel fitlerByPublic">
+    <!-- <div class="right_panel fitlerByPublic">
       <div class="filter_btn">
         <a v-if="!filterMyPublic" class="mypub_btn" @click='filterByPublic'>Удалить недавние</a>
         <a v-if="filterMyPublic" class="mypub_btn" @click='returnSourceFilter'>Отмена</a>
@@ -27,7 +27,7 @@
       <div class="mypub">
         <input type="text" class="form-control" @keyup.enter="saveMyPub" v-model="mypublic_id" placeholder="Вставьте id своего паблика" />
       </div>
-    </div>
+    </div> -->
   </section>
   
   <pagination 
@@ -188,6 +188,11 @@ export default {
           if (_this.checkAdvert(arr[i].text,arr[i])) {
             if ( arr[i].attachments) {
               for (var j = 0; j < arr[i].attachments.length; j++) {
+                if (arr[i].attachments[j].type == 'doc') {
+                  __photo.push(
+                      arr[i].attachments[j].doc.url
+                    );
+                }
                 if (arr[i].attachments[j].type == 'photo') {
                   __photo.push(
                       arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
