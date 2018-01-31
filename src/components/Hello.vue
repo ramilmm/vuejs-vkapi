@@ -61,12 +61,12 @@
     <div v-if='post' class="panel-body">
       <span class="body__text">{{ post.text }}</span> <br/>
       <div class="post__photo" v-if='post.photo.length == 1'>
-        <img @click='copy(p)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p'>
+        <img @click='copy(p.origin)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p.preview'>
       </div>
       <div class="post__photo multiple" 
            v-if='post.photo.length != 1'
            :style="{ minHeight: post.photo_size + 'px'}">
-        <img @click='copy(p)'
+        <img @click='copy(p.origin)'
           v-for='(p,index) in post.photo'
           v-if='p' 
           v-bind:class="[index == 0 ? 'first' : '', 'post__photo__item','multiple_photo']"
@@ -183,25 +183,50 @@ export default {
       _this.posts = [];
       _this.allPosts = [];
       var __photo = [];
+      var max = 0;
       for (var i = 0; i < arr.length; i++) {
          let size = '';
           if (_this.checkAdvert(arr[i].text,arr[i])) {
             if ( arr[i].attachments) {
               for (var j = 0; j < arr[i].attachments.length; j++) {
-                if (arr[i].attachments[j].type == 'doc') {
-                  __photo.push(
-                      arr[i].attachments[j].doc.url
-                    );
-                }
+                var img = {
+                  preview: '',
+                  origin: ''
+                };
                 if (arr[i].attachments[j].type == 'photo') {
-                  __photo.push(
-                      arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src
-                    );
+                  for (var f = 0; f < arr[i].attachments[j].photo.sizes.length; f++) {
+                    if (arr[i].attachments[j].photo.sizes[f].width <= 604 && arr[i].attachments[j].photo.sizes[f].width >= 480) {
+                      img.preview = arr[i].attachments[j].photo.sizes[f].src;
+                      break;
+                    }
+                    if (arr[i].attachments[j].photo.sizes.length >= 4 && arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 2].width > 100) {
+                      img.preview = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 2].src;
+                    }else {
+                      img.preview = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src;
+                    }
+                  }
+                  img.origin = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src; 
+
+                  __photo.push(img);
                   let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height);
                   let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width);
+
+                  if (height > max) {
+                    max = height;
+                  }
                   //TODO: EDIT THIS ALGORITHM 
-                  size = Math.round(height/(width/553));
+                  size = Math.round(max/(width/553));
                   size = Math.round(size + (size/100)*10);
+                  console.log("preview: ", img.preview);
+                  console.log("origin:", img.origin);
+                  continue;
+
+                }
+                 if (arr[i].attachments[j].type == 'doc') {
+                  img.preview = arr[i].attachments[j].doc.url;
+                  img.origin = arr[i].attachments[j].doc.url;
+                  
+                  __photo.push(img);
                 }
               }
             }
