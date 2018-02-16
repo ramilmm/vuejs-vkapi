@@ -8,7 +8,7 @@
       @close="showModal = false"
       @save="savePublic(publics_id)"
       ></modal>
-    <a id="show-modal" @click="showModal = true" class="add_publics_btn">Обновить список пабликов</a>
+    <a id="show-modal" @click="showModal = true" class="add_publics_btn">Обнoвить списoк пабликов</a>
     <a href="#" class="scroll-down" @click='scrollTop'></a>
     <div class="showAll">
       <a v-if="clicked" class="pagination__left" @click='showAll'>Показать все посты</a>
