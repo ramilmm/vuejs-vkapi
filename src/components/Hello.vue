@@ -70,7 +70,7 @@
           v-for='(p,index) in post.photo'
           v-if='p' 
           v-bind:class="[index == 0 ? 'first' : '', 'post__photo__item','multiple_photo']"
-          :src='p'
+          :src='p.preview'
           :style='{
             left: index*1 + "%",
             top: index*1 + "%",
@@ -183,8 +183,8 @@ export default {
       _this.posts = [];
       _this.allPosts = [];
       var __photo = [];
-      var max = 0;
       for (var i = 0; i < arr.length; i++) {
+         let max = 0;
          let size = '';
           if (_this.checkAdvert(arr[i].text,arr[i])) {
             if ( arr[i].attachments) {
@@ -193,32 +193,37 @@ export default {
                   preview: '',
                   origin: ''
                 };
+                let counter;
                 if (arr[i].attachments[j].type == 'photo') {
                   for (var f = 0; f < arr[i].attachments[j].photo.sizes.length; f++) {
                     if (arr[i].attachments[j].photo.sizes[f].width <= 604 && arr[i].attachments[j].photo.sizes[f].width >= 480) {
                       img.preview = arr[i].attachments[j].photo.sizes[f].src;
+                      counter = f;
                       break;
                     }
                     if (arr[i].attachments[j].photo.sizes.length >= 4 && arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 2].width > 100) {
                       img.preview = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 2].src;
+                      counter = arr[i].attachments[j].photo.sizes.length - 2;
                     }else {
                       img.preview = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src;
+                      counter = arr[i].attachments[j].photo.sizes.length - 1;
                     }
                   }
                   img.origin = arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].src; 
 
                   __photo.push(img);
-                  let height = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].height);
-                  let width = parseInt(arr[i].attachments[j].photo.sizes[arr[i].attachments[j].photo.sizes.length - 1].width);
+                  let height = parseInt(arr[i].attachments[j].photo.sizes[counter].height);
+                  let width = parseInt(arr[i].attachments[j].photo.sizes[counter].width);
 
                   if (height > max) {
+                    console.log(height);
+                    console.log(max);
                     max = height;
                   }
                   //TODO: EDIT THIS ALGORITHM 
-                  size = Math.round(max/(width/553));
+                  size = Math.round(max+(max/10)/(width/553));
                   size = Math.round(size + (size/100)*10);
-                  console.log("preview: ", img.preview);
-                  console.log("origin:", img.origin);
+                  counter = 0;
                   continue;
 
                 }
