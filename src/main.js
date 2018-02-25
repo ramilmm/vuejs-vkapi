@@ -6,9 +6,18 @@ import Hello from './components/Hello.vue'
 import Sabr from './components/Sabr.vue'
 import VueResource from 'vue-resource'
 import VueRouter from 'vue-router'
+// import VueLazyload from 'vue-lazyload'
 
 Vue.use(VueRouter)
 Vue.use(VueResource)
+
+// Vue.use(VueLazyload, {
+//   preLoad: 1.3,
+//   error: 'error.gif',
+//   loading: 'load1.gif',
+//   attempt: 2
+// })
+
 Vue.config.productionTip = false
 
 const router = new VueRouter({

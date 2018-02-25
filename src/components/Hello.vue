@@ -44,7 +44,7 @@
           <!-- <li class="filter_item" @click='sortBy("date")'>Дате</li> -->
         </ul>
     </div>
-    <i v-show="loading" class="fa fa-spinner fa-spin fa-3x"></i>
+    <img v-show="loading" src="/static/load1.gif" />
     <div v-if='post.text || post.photo' class="panel panel-default" v-for='post in posts'>
     <div class="panel-heading">
       <img :src='post.public_photo' width="25px" height="25px">
@@ -216,8 +216,6 @@ export default {
                   let width = parseInt(arr[i].attachments[j].photo.sizes[counter].width);
 
                   if (height > max) {
-                    console.log(height);
-                    console.log(max);
                     max = height;
                   }
                   //TODO: EDIT THIS ALGORITHM 
