@@ -40,13 +40,14 @@
         </ul>
     </div>
 
-    <i v-show="loading" class="fa fa-spinner fa-spin fa-3x"></i>
+    <img v-show="loading" src="/static/load1.gif" />
     <div v-if='post.text || post.photo' class="panel panel-default" v-for='post in posts'>
     <div class="panel-heading">
       <img :src='post.public_photo' width="25px" height="25px">
       <h3 class="panel-title">
         <span>{{ post.public_name }}</span>
         <a  :href="post.link_to_post" target="_blank">{{ post.date }}</a>
+         <span @click='copy(post.link_to_post)' class="glyphicon glyphicon-duplicate copy_btn"></span>
         </h3>
       <div class="counters">
         <span class="glyphicon glyphicon-heart likes"><span class="counter">{{ post.likes }}</span></span>
@@ -667,5 +668,14 @@ a.show-all {
 .mypub {
   padding: 11px;
   margin-top: -17px;
+}
+
+.copy_btn {
+  font-size: 1em;
+  opacity: 0.4;
+}
+.copy_btn:hover {
+  opacity: 0.8;
+  cursor: pointer;
 }
 </style>

@@ -51,6 +51,7 @@
       <h3 class="panel-title">
         <span>{{ post.public_name }}</span>
         <a  :href="post.link_to_post" target="_blank">{{ post.date }}</a>
+        <span @click='copy(post.link_to_post)' class="glyphicon glyphicon-duplicate copy_btn"></span>
         </h3>
       <div class="counters">
         <span class="glyphicon glyphicon-heart likes"><span class="counter">{{ post.likes }}</span></span>
