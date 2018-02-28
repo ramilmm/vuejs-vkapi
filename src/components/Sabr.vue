@@ -177,6 +177,9 @@ export default {
                       size = Math.round(height/(width/553));
                       size = Math.round(size + (size/100)*10);
                     }
+                     if (arr[i].attachments[j].type == 'doc') {
+                      __photo.push(arr[i].attachments[j].doc.url); 
+                    }
                   }
                 }
                 let view_count;
