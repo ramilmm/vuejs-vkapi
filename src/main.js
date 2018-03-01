@@ -10,6 +10,7 @@ import VueRouter from 'vue-router'
 
 Vue.use(VueRouter)
 Vue.use(VueResource)
+// Vue.use(VueLazyload)
 
 // Vue.use(VueLazyload, {
 //   preLoad: 1.3,

@@ -380,7 +380,7 @@ export default {
               + 'return posts;'; 
               _this.loading = true;
               var buf = [];
-              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
+              VK.Api.call("execute", {code: code, access_token: myOption.access_token,v: myOption.v}, function(data) {
                 if (data.response) {
                   for (var i = 0; i < _this.posts.length; i++) {
                     for (var j = 0; j < data.response.length; j++) {

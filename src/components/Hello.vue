@@ -62,7 +62,13 @@
     <div v-if='post' class="panel-body">
       <span class="body__text">{{ post.text }}</span> <br/>
       <div class="post__photo" v-if='post.photo.length == 1'>
-        <img @click='copy(p.origin)' v-for='p in post.photo' v-if='p' class="post__photo__item" :src='p.preview'>
+
+        <img @click='copy(p.origin)' v-for='p in post.photo' v-if="p.type === 'img'" class="post__photo__item" :src='p.preview'>
+    
+        <div v-else>
+            <img @click='showGif(p.origin)' v-for='p in post.photo' :src='p.preview'>
+            <img class="overlay" src="/static/gif.png">
+        </div>
       </div>
       <div class="post__photo multiple" 
            v-if='post.photo.length != 1'
@@ -192,10 +198,12 @@ export default {
               for (var j = 0; j < arr[i].attachments.length; j++) {
                 var img = {
                   preview: '',
-                  origin: ''
+                  origin: '',
+                  type: ''
                 };
                 let counter;
                 if (arr[i].attachments[j].type == 'photo') {
+                  img.type = 'img';
                   for (var f = 0; f < arr[i].attachments[j].photo.sizes.length; f++) {
                     if (arr[i].attachments[j].photo.sizes[f].width <= 604 && arr[i].attachments[j].photo.sizes[f].width >= 480) {
                       img.preview = arr[i].attachments[j].photo.sizes[f].src;
@@ -227,9 +235,10 @@ export default {
 
                 }
                  if (arr[i].attachments[j].type == 'doc') {
-                  img.preview = arr[i].attachments[j].doc.url;
+                  img.type = 'gif';
+                  img.preview = arr[i].attachments[j].doc.preview.photo.sizes[2].src;
                   img.origin = arr[i].attachments[j].doc.url;
-                  
+
                   __photo.push(img);
                 }
               }
@@ -368,7 +377,7 @@ export default {
         buf = [];
       }
         this.posts = result;
-        this.mix(this.posts);
+        // this.mix(this.posts);
     },
     average(arr,type) {
       var sum = 0;
@@ -408,6 +417,9 @@ export default {
               document.body.removeChild(textarea);
           }
       }
+    },
+    showGif(url){
+      event.target.setAttribute('src', url);
     },
     savePublic(publics_id) {
       this.publics_id = publics_id;
@@ -473,9 +485,10 @@ export default {
               + '};'
               + 'return posts;'; 
               _this.loading = true;
-              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
+              VK.Api.call("execute", {code: code, access_token: myOption.access_token,v: myOption.v}, function(data) {
                 console.log(data);
                 if (data.response) {
+                  console.log(data.response);
                     _this.parseResponse(data.response);
                     console.log('Загрузка: ' + _this.allPosts.length + '/' + _this.publics_id.length*_this.perPage);
                 } else {
@@ -512,56 +525,6 @@ export default {
            }
         }
       }
-    },
-    filterByPublic() {
-      var _this = this;
-
-      var myOption = {
-          owner_id: -_this.mypublic_id,
-          count: 100,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
-          v: '5.69'
-      }
-      let count = 1;
-      var code = 'var offset = 0;' 
-              + 'var posts = API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
-              + 'var i = 1;'
-              + 'while (i < 7) {'
-                + 'posts = posts + API.wall.get({"owner_id": ' + myOption.owner_id + ', "v":' + myOption.v + ', "count": ' + myOption.count + ', "offset": offset, "access_token": ' + '\"' + myOption.access_token + '\"' + '}).items;'
-              +   'i = i + 1;'
-              +   'offset = offset + 100;'
-              + '};'
-              + 'return posts;'; 
-              _this.loading = true;
-              var buf = [];
-              VK.Api.call("execute", {code: code, access_token: myOption.access_token}, function(data) {
-                if (data.response) {
-                  for (var i = 0; i < _this.posts.length; i++) {
-                    for (var j = 0; j < data.response.length; j++) {
-                      if (_this.posts[i].text.length > 1 && _this.posts[i].text == data.response[j].text) {
-                        buf.push(data.response[j].text);
-                        break;
-                      }
-                    }
-                  }
-                  //TODO: optimize algorithm
-                  for (var i = 0; i < buf.length; i++) {
-                    for (var j = 0; j < _this.posts.length; j++) {
-                      if (buf[i] == _this.posts[j].text) {
-                        _this.posts.splice(j,1);
-                        console.log('spliced');
-                      }
-                    }
-                  }
-
-                  console.log(_this.posts.length);
-                  _this.loading = false;
-                  _this.filterMyPublic = true;
-                } else {
-                    alert(data.error.error_msg);
-                }
-            });
-
     },
     returnSourceFilter() {
       this.filterMyPublic = false;
@@ -840,4 +803,13 @@ a.show-all {
   border-color: #ea4c89;
   color: #ea4c89;
 }
+
+.overlay {
+  height: 50px;
+  width: 50px;
+  position: absolute;
+  top: 5%;
+  left: 0%;
+}
+
 </style>
