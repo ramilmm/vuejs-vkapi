@@ -472,7 +472,7 @@ export default {
             offset: (page == 1) ? 0 : _this.perPage*page,
             photo_sizes: 1,
             extended: 1,
-            access_token: '3192b4e8bce78bb9a9622b54941710405f8213557503c62a69110dabaee965eba5905113aa8c6996a62dd',
+            access_token: 'XXX',
             v: '5.69'
         }
         let count = 1;
@@ -507,7 +507,7 @@ export default {
       }
       var myOption = {
           group_ids: publics,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          access_token: 'XXX',
           v: '5.69',
           fields: 'id,name,photo_200'
       }
