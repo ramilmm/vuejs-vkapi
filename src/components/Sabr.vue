@@ -156,7 +156,7 @@ export default {
           offset: (page == 1) ? 0 : this.perPage*page,
           photo_sizes: 1,
           extended: 1,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          access_token: 'XXX',
           v: '5.67'
       }
       myOption.owner_id = -_this.publics_id.id
@@ -365,7 +365,7 @@ export default {
       var myOption = {
           owner_id: -_this.mypublic_id,
           count: 100,
-          access_token: '44be9cbe44be9cbe449b81dd6544e615d3444be44be9cbe1c7596424c532a7cfb15cc00',
+          access_token: 'XXX',
           v: '5.69'
       }
       let count = 1;
